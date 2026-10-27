@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desktop",
+  "description": "Local Mochi windows may receive events. All desktop mutations use validated Rust commands.",
+  "windows": [
+    "pet",
+    "settings",
+    "menu",
+    "reminder"
+  ],
+  "permissions": [
+    "core:default"
+  ]
+}

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+*.tsbuildinfo
+*.log
+.build-tools/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx

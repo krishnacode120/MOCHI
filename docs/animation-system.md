@@ -1,0 +1,15 @@
+# Animation system
+
+`characters/mochi/artwork.ts` constructs original vector layers: hoodie body, head, eyes/pupils/lids, mouth, hair, arms, legs, teacup, and shadow. The same design is supplied as `public/mochi.svg` for the native settings portrait; the desktop character itself is rendered and articulated by PixiJS. `scripts/generate-icons.ps1` generates original tray/application icons without external artwork.
+
+`PetMachine` has IDLE, CURIOUS, WALKING, SITTING, PLAYING, SLEEPING, WAKING, WAVING, JUMPING, DANCING, DRINKING_TEA, DRAGGING, and PAUSED. Requests have idle/system/user sources. Idle requests only interrupt safe resting states and use per-action cooldowns. User animations resist idle sleep requests. Drag blocks all transitions except release and pause. Pausing remembers sleep or idle as a safe return state. A bounded one-slot queue lets an action requested while asleep finish waking first; the newest user request during waking replaces the pending action. Dragging/pause clear that queue.
+
+The animation clock does not advance while paused, hidden, or paused for a fullscreen app. GSAP transitions use the configured speed. `Animator` kills an interrupted timeline and resets pose values; sleep/wake interpolates from the current sleep pose. Rendering interpolates gaze toward global cursor samples and limits pupil movement/tilt. Walking alternates limbs; sitting lowers the body and swings feet; a jump has anticipation, ascent, landing squash, and recovery. Tea lifts a separate cup and fades steam. Pip floats, settles next to a sleeping Mochi, and follows the local cursor during play.
+
+The behavior scheduler uses injected randomness in tests, a 22–48 second spontaneous interval, no immediate repeated idle actions, and configurable 30/120/300 second calm/sit/sleep defaults. Manual sleep remains asleep until an explicit user wake or interaction. Windows system inactivity drives automatic sleep; browser preview uses only synthetic local pointer activity and is labeled accordingly.
+
+Statistics change gently after successful interactions. Sleep restores one energy point per ten active animation-clock seconds; there is no decay, death, debt, notification pressure, or offline-time penalty. Stats save every 30 seconds, so abrupt process termination may lose the most recent interactions.
+
+Effects include hearts, four-point sparkles, stars, bubbles, sleep strokes, butterflies, and dust. A fixed pool and active-count setting bound allocations. Saver, quiet, or reduced-motion modes clear effects. The scene is capped at 60 FPS normally and 30 in saver/reduced motion. Native shaped regions use articulated bounds rather than a full rectangular canvas; quick movements can clip at the 10 Hz region boundary until the next update. Verify this on Windows before release.
+
+Future bitmap assets can use `loadCharacterAsset` in `characters/assets.ts`. It loads local PNG layers or an explicit spritesheet animation and returns a display tree. This is an extension interface; v0.1 does not expose an import button. Callers retain responsibility for releasing cached textures when retiring custom characters.

@@ -1,0 +1,13 @@
+import { readFile, copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+const config = JSON.parse(await readFile(new URL('../src-tauri/tauri.conf.json', import.meta.url), 'utf8'));
+const file = `Mochi_${config.version}_x64-setup.exe`;
+const directory = new URL('../downloads/', import.meta.url);
+const source = new URL(`../src-tauri/target/release/bundle/nsis/${file}`, import.meta.url);
+const bytes = await readFile(source);
+const hash = createHash('sha256').update(bytes).digest('hex');
+await mkdir(directory, { recursive: true });
+await copyFile(source, new URL(file, directory));
+await writeFile(new URL('SHA256SUMS.txt', directory), `${hash}  ${file}\n`);
+await writeFile(new URL('README.md', directory), `# MOCHI ${config.version}\n\n[Download the Windows x64 installer](${file}) (${(bytes.length / 1048576).toFixed(2)} MiB).\n\nRun the installer, then use **Mochi Start-Stop** on the desktop to start or cleanly stop the companion. WebView2 must already be installed. No administrator account is required for MOCHI's per-user installation. The installer is unsigned.\n\nSHA-256 checksums are in [SHA256SUMS.txt](SHA256SUMS.txt). Source and build instructions are in the repository root.\n`);
+console.log(`Prepared downloads/${file}: ${bytes.length} bytes; SHA-256 ${hash}`);

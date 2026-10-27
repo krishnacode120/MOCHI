@@ -1,0 +1,216 @@
+use crate::{
+    monitor, platform,
+    settings::{Config, Position},
+};
+use serde::Deserialize;
+use std::sync::Mutex;
+use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewWindow};
+#[derive(Debug, Clone, Deserialize)]
+pub struct HitEllipse {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+#[derive(Clone, Copy)]
+pub struct Drag {
+    pub cursor: Position,
+    pub window: Position,
+}
+#[derive(Default)]
+pub struct Desktop {
+    pub drag: Mutex<Option<Drag>>,
+    pub home: Mutex<Option<Position>>,
+}
+pub fn pet(app: &AppHandle) -> Result<WebviewWindow, String> {
+    app.get_webview_window("pet")
+        .ok_or("Pet window missing".into())
+}
+pub fn apply(app: &AppHandle) -> Result<(), String> {
+    let s = app.state::<Config>().snapshot().settings;
+    let pet = pet(app)?;
+    pet.set_always_on_top(s.always_on_top)
+        .map_err(|e| e.to_string())?;
+    pet.set_ignore_cursor_events(s.click_through || !s.interactions)
+        .map_err(|e| e.to_string())?;
+    pet.set_size(LogicalSize::new(320. * s.size, 340. * s.size))
+        .map_err(|e| e.to_string())?;
+    recover(app, false)
+}
+pub fn recover(app: &AppHandle, reset: bool) -> Result<(), String> {
+    let config = app.state::<Config>();
+    let data = config.snapshot();
+    let areas = monitor::all(app)?;
+    let pet = pet(app)?;
+    let current = pet.outer_position().map_err(|e| e.to_string())?;
+    let preferred = &areas[data.settings.monitor.min(areas.len() - 1)];
+    let p = if reset {
+        monitor::corner(preferred, data.settings.size)
+    } else {
+        Position {
+            x: current.x,
+            y: current.y,
+        }
+    };
+    let area = if reset {
+        preferred
+    } else {
+        monitor::nearest(&areas, p)
+    };
+    let p = monitor::clamp(
+        p,
+        (320. * data.settings.size * area.scale) as u32,
+        (340. * data.settings.size * area.scale) as u32,
+        area,
+    );
+    if p.x != current.x || p.y != current.y || reset {
+        pet.set_position(PhysicalPosition::new(p.x, p.y))
+            .map_err(|e| e.to_string())?;
+        *app.state::<Desktop>()
+            .home
+            .lock()
+            .map_err(|e| e.to_string())? = None;
+        app.emit_to("pet", "position-reset", ())
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+pub fn restore(app: &AppHandle) -> Result<(), String> {
+    let data = app.state::<Config>().snapshot();
+    if let Some(p) = data.position {
+        pet(app)?
+            .set_position(PhysicalPosition::new(p.x, p.y))
+            .map_err(|e| e.to_string())?;
+        apply(app)?;
+    } else {
+        apply(app)?;
+        recover(app, true)?;
+    }
+    Ok(())
+}
+pub fn persist_position(app: &AppHandle) -> Result<(), String> {
+    let pet = pet(app)?;
+    let mut p = pet.outer_position().map_err(|e| e.to_string())?;
+    let config = app.state::<Config>();
+    let s = config.snapshot().settings;
+    let areas = monitor::all(app)?;
+    let area = monitor::nearest(&areas, Position { x: p.x, y: p.y });
+    let size = pet.outer_size().map_err(|e| e.to_string())?;
+    if s.snap_edges {
+        let edge_x = area.x + area.width.saturating_sub(size.width) as i32;
+        let edge_y = area.y + area.height.saturating_sub(size.height) as i32;
+        let threshold = (18. * area.scale) as i32;
+        if (p.x - area.x).abs() < threshold {
+            p.x = area.x;
+        } else if (p.x - edge_x).abs() < threshold {
+            p.x = edge_x;
+        }
+        if (p.y - area.y).abs() < threshold {
+            p.y = area.y;
+        } else if (p.y - edge_y).abs() < threshold {
+            p.y = edge_y;
+        }
+    }
+    let pos = monitor::clamp(Position { x: p.x, y: p.y }, size.width, size.height, area);
+    pet.set_position(PhysicalPosition::new(pos.x, pos.y))
+        .map_err(|e| e.to_string())?;
+    config.data.lock().map_err(|e| e.to_string())?.position = Some(pos);
+    config.write()
+}
+pub fn start_drag(app: &AppHandle) -> Result<(), String> {
+    let s = app.state::<Config>().snapshot().settings;
+    if s.click_through || !s.interactions {
+        return Err("Mouse interaction is disabled".into());
+    }
+    let p = pet(app)?.outer_position().map_err(|e| e.to_string())?;
+    *app.state::<Desktop>()
+        .home
+        .lock()
+        .map_err(|e| e.to_string())? = None;
+    *app.state::<Desktop>()
+        .drag
+        .lock()
+        .map_err(|e| e.to_string())? = Some(Drag {
+        cursor: platform::cursor()?,
+        window: Position { x: p.x, y: p.y },
+    });
+    Ok(())
+}
+pub fn finish_drag(app: &AppHandle) -> Result<(), String> {
+    let had_drag = app
+        .state::<Desktop>()
+        .drag
+        .lock()
+        .map_err(|e| e.to_string())?
+        .take()
+        .is_some();
+    if had_drag {
+        recover(app, false)?;
+        persist_position(app)?;
+    }
+    Ok(())
+}
+pub fn drag_tick(app: &AppHandle, cursor: Position) -> Result<(), String> {
+    let drag = *app
+        .state::<Desktop>()
+        .drag
+        .lock()
+        .map_err(|e| e.to_string())?;
+    if let Some(drag) = drag {
+        if !platform::left_down() {
+            finish_drag(app)?;
+            let _ = app.emit_to("pet", "drag-ended", ());
+            return Ok(());
+        }
+        pet(app)?
+            .set_position(PhysicalPosition::new(
+                drag.window.x + cursor.x - drag.cursor.x,
+                drag.window.y + cursor.y - drag.cursor.y,
+            ))
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+pub fn move_relative(app: &AppHandle, dx: f64, dy: f64, returning: bool) -> Result<(), String> {
+    if !dx.is_finite() || !dy.is_finite() {
+        return Err("Invalid movement".into());
+    }
+    let s = app.state::<Config>().snapshot().settings;
+    let desktop = app.state::<Desktop>();
+    if desktop.drag.lock().map_err(|e| e.to_string())?.is_some() {
+        return Ok(());
+    }
+    let window = pet(app)?;
+    let p = window.outer_position().map_err(|e| e.to_string())?;
+    let mut home = desktop.home.lock().map_err(|e| e.to_string())?;
+    let base = *home.get_or_insert(Position { x: p.x, y: p.y });
+    let areas = monitor::all(app)?;
+    let area = monitor::nearest(&areas, base);
+    let scale = window.scale_factor().map_err(|e| e.to_string())? * s.size;
+    let dest = Position {
+        x: base.x + (dx.clamp(-s.play_radius, s.play_radius) * scale) as i32,
+        y: base.y + (dy.clamp(-s.play_radius, s.play_radius) * scale) as i32,
+    };
+    let size = window.outer_size().map_err(|e| e.to_string())?;
+    let dest = monitor::clamp(dest, size.width, size.height, area);
+    window
+        .set_position(PhysicalPosition::new(dest.x, dest.y))
+        .map_err(|e| e.to_string())?;
+    if returning {
+        *home = None;
+    }
+    Ok(())
+}
+pub fn show_menu(app: &AppHandle) -> Result<(), String> {
+    let menu = app.get_webview_window("menu").ok_or("Menu missing")?;
+    let p = platform::cursor()?;
+    let areas = monitor::all(app)?;
+    let area = monitor::nearest(&areas, p);
+    let size = menu.outer_size().map_err(|e| e.to_string())?;
+    let p = monitor::clamp(p, size.width, size.height, area);
+    menu.set_position(PhysicalPosition::new(p.x, p.y))
+        .map_err(|e| e.to_string())?;
+    menu.show()
+        .and_then(|_| menu.set_focus())
+        .map_err(|e| e.to_string())
+}
