@@ -67,7 +67,23 @@ export function createMochi(outfit: Settings['outfit']) {
     balloons.addChild(balloon); balloonParts.push(balloon);
   }
   rig.addChildAt(balloons, 0); balloons.visible = false;
-  return { root, rig, shadow, body, head, hair, eyes, pupils, lids, mouth, yawn, leftArm, rightArm, leftLeg, rightLeg, cup, steam, blush, laptop, codeLines, balloons, balloonParts, strings,
+  const pillow = ellipse(57, 23, 0xfff6e7); pillow.position.set(-42, -10);
+  pillow.addChild(new Graphics().moveTo(-39, -6).quadraticCurveTo(-23, -13, -6, -8).stroke({ color: 0xe3d5ca, width: 1.5 }));
+  rig.addChildAt(pillow, 1); pillow.visible = false;
+  const blanket = new Container(); blanket.position.set(24, -6);
+  const quilt = ellipse(83, 40, colors.main); blanket.addChild(quilt);
+  blanket.addChild(new Graphics().moveTo(-65, -18).quadraticCurveTo(0, -41, 65, -18).stroke({ color: colors.light, width: 10, cap: 'round' }).moveTo(-57, 15).quadraticCurveTo(0, 39, 58, 16).stroke({ color: colors.dark, width: 1.2, alpha: .65 }));
+  for (const [x, y, size] of [[-26, 1, 6], [10, 15, 5], [43, -1, 7]]) blanket.addChild(new Graphics().star(x, y, 4, size, size * .4).fill(0xfff1cd));
+  rig.addChild(blanket); blanket.visible = false;
+  const night = new Container(); root.addChild(night); night.visible = false;
+  const moon = new Graphics().moveTo(8, -18).bezierCurveTo(-18, -23, -27, 12, -5, 21).bezierCurveTo(7, 26, 20, 16, 21, 7).bezierCurveTo(-1, 15, -8, -8, 8, -18).closePath().fill(0xffe6a6).stroke({ color: 0xc5a164, width: 1.6 });
+  moon.position.set(239, 139); night.addChild(moon);
+  const nightStars: Graphics[] = [];
+  for (const [x, y, size] of [[201, 105, 5], [271, 112, 7], [282, 166, 4], [207, 179, 5]]) {
+    const star = new Graphics().star(0, 0, 4, size, size * .35).fill(0xffedbe).stroke({ color: 0xd1b77f, width: .8 });
+    star.position.set(x, y); night.addChild(star); nightStars.push(star);
+  }
+  return { root, rig, shadow, body, head, hair, eyes, pupils, lids, mouth, yawn, leftArm, rightArm, leftLeg, rightLeg, cup, steam, blush, laptop, codeLines, balloons, balloonParts, strings, pillow, blanket, quilt, night, moon, nightStars,
     hitParts: [hoodie, hood, earL, earR, tuft, leftArm, rightArm, leftLeg, rightLeg] };
 }
 export type MochiRig = ReturnType<typeof createMochi>;

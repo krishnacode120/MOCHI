@@ -1,6 +1,16 @@
 # Verification status — 28 October 2026
 
-## MOCHI 0.4.0 — current delivery
+## MOCHI 0.5.0 — current delivery
+
+- TypeScript and the production frontend build passed. All 18 focused tests passed, including movie-mode persistence/fullscreen suspension, settings migration, teleport fade timing, and existing route bounds coverage extended to teleporting/falling.
+- Native release compilation produced the NSIS installer. The per-user upgrade returned exit code 0; size (0.65), speed (1.5), and existing preferences were retained.
+- The installed app visibly rendered Mochi curled beneath the quilt with a moon and stars, both new character designs, Olaf with popcorn and cola, and WALL-E writing at the wooden desk. Auto weather visibly progressed through sun, rain, and snow. Character switching and the movie action controls worked.
+- Mochi was restored as the selected character. Start-Stop cleanly exited with zero pet processes, then the installed 0.5.0 app was restarted. The desktop shortcut still targets the installed executable with `--toggle`.
+- Movie mode is explicitly started/ended by the user. Fullscreen suspension is covered by a focused test; actual fullscreen film playback was not exercised. Weather is decorative and offline. Character personalities are scripted.
+- No screenshots containing the user's background windows were added. No broad UI suite, separate Rust test rebuild, or long-duration test was run. Real keyboard reaction and multi-monitor/DPI checks remain manual as noted below.
+- Installer: `downloads/Mochi_0.5.0_x64-setup.exe` — 1,570,831 bytes. SHA-256: `8907b088d3a6bc017ae93a5aa89b31851ef25ac62d9baf2b062fb431a0c9c5ea`.
+
+## MOCHI 0.4.0 — previous delivery
 
 - TypeScript and the production frontend build passed.
 - All 15 focused frontend checks passed. New coverage verifies work-area bounds, full-area corner visits, return-home endpoints, automatic reveal, finding a hidden pet, typing opt-out/quiet mode, protected user actions, and action-time continuity across speed changes.

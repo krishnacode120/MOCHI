@@ -7,6 +7,8 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewWindow};
 #[derive(Debug, Clone, Deserialize)]
 pub struct HitEllipse {
+    #[serde(default)]
+    pub rectangular: bool,
     pub x: f64,
     pub y: f64,
     pub width: f64,

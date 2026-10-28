@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Settings, Stats, PetState } from '../types';
 export const defaults: Settings = {
+  character: 'mochi', climate: 'auto',
   size: 1, outfit: 'lavender', speed: 1, sensitivity: 1, pip: true, opacity: 1,
   alwaysOnTop: true, reducedMotion: false, particles: 18, theme: 'cream', autoSleep: true,
   randomActions: true, followCursor: true, interactions: true, quiet: false, stats: true,
@@ -23,6 +24,8 @@ export function validateSettings(input: Partial<Settings>): Settings {
   s.sitAfter = Math.max(s.calmAfter, s.sitAfter); s.sleepAfter = Math.max(s.sitAfter, s.sleepAfter);
   if (!['lavender', 'peach', 'sky'].includes(s.outfit)) s.outfit = defaults.outfit;
   if (!['cream', 'dusk'].includes(s.theme)) s.theme = defaults.theme;
+  if (!['mochi', 'walle', 'olaf'].includes(s.character)) s.character = defaults.character;
+  if (!['off', 'auto', 'sunny', 'rain', 'snow', 'wind'].includes(s.climate)) s.climate = defaults.climate;
   s.monitor = Math.round(s.monitor); s.particles = Math.round(s.particles);
   for (const key of ['waterInterval', 'stretchInterval', 'eyeInterval'] as const) s[key] = Math.round(Math.min(240, Math.max(10, s[key])));
   return s;

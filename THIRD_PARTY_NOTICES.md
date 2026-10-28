@@ -20,3 +20,7 @@ Rust dependencies are resolved in Cargo.lock, including Tauri 2.12.5, autostart 
 GSAP is free to use for this application under its own standard license; its terms remain applicable and the repository MIT license does not relicense it. See the installed package's README and [GSAP licensing](https://gsap.com/standard-license/). Retain dependency license notices in any distribution. Microsoft WebView2 is a separately installed system runtime governed by Microsoft's terms.
 
 The packaged frontend preserves dependency legal comments through Vite's bundling. `npm run licenses` generates `licenses/THIRD_PARTY_LICENSES.txt` from the installed production npm packages and the locked Windows Rust dependency graph. The production build regenerates this inventory and packages it alongside this notice and the project license.
+
+## Character references
+
+WALL-E and Olaf are Disney/Pixar characters. This project includes unofficial, stylized fan interpretations drawn procedurally in code, alongside the original Mochi and Pip designs. No official sprites, film frames, music, or voice tracks are bundled. Character names and source designs are not original MOCHI creations.

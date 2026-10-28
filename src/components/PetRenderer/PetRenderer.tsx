@@ -2,9 +2,11 @@ import { useEffect, useRef } from 'react';
 import { Application, Container } from 'pixi.js';
 // Use Pixi's static shader bindings under Tauri's CSP, which disallows eval.
 import 'pixi.js/unsafe-eval';
-import { createMochi } from '../../characters/mochi/artwork';
+import { createCharacter } from '../../characters/createCharacter';
+import { Climate } from '../../engine/particles/Climate';
 import { Pip } from '../../characters/pip/Pip';
 import { Animator } from '../../engine/animation/Animator';
+import { shouldSuspend as suspendScene } from '../../engine/behavior/sceneRules';
 import { Behavior } from '../../engine/behavior/Behavior';
 import { PetMachine } from '../../engine/stateMachine/PetMachine';
 import { Particles } from '../../engine/particles/Particles';
@@ -36,7 +38,9 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
       host.current!.appendChild(app.canvas);
       const scene = new Container(); app.stage.addChild(scene);
       let outfit = usePetStore.getState().settings.outfit;
-      let rig = createMochi(outfit); scene.addChild(rig.root);
+      let character = settings().character;
+      const climate = new Climate(); scene.addChild(climate);
+      let rig = createCharacter(settings()); scene.addChild(rig.root);
       const pip = new Pip(); pip.position.set(245, 120); scene.addChild(pip);
       const particles = new Particles(); scene.addChild(particles);
       const animator = new Animator(); const behavior = new Behavior();
@@ -65,7 +69,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         else if (a === 'resume') machine.resume(elapsed);
         else if (a === 'outfit') { const choices = ['lavender', 'peach', 'sky'] as const; void saveSettings({ outfit: choices[(choices.indexOf(usePetStore.getState().settings.outfit) + 1) % 3] }); }
         else {
-          const state = { pet: machine.state === 'HIDE_SEEK' || Math.random() > .5 ? 'WAVING' : 'JUMPING', tea: 'DRINKING_TEA', play: 'PLAYING', run: 'RUNNING', climb: 'CLIMBING', explore: 'EXPLORING', hideSeek: 'HIDE_SEEK', hop: 'HOPSCOTCH', work: 'TYPING', watch: 'WATCHING', stretch: 'STRETCHING', dance: 'DANCING', sleep: 'SLEEPING', wake: 'WAKING' } as const;
+          const state = { pet: machine.state === 'HIDE_SEEK' || Math.random() > .5 ? 'WAVING' : 'JUMPING', tea: 'DRINKING_TEA', play: 'PLAYING', run: 'RUNNING', climb: 'CLIMBING', explore: 'EXPLORING', hideSeek: 'HIDE_SEEK', hop: 'HOPSCOTCH', movie: machine.state === 'MOVIE' ? 'IDLE' : 'MOVIE', write: 'WRITING', teleport: 'TELEPORTING', fall: 'FALLING', hug: 'HUGGING', story: 'STORYTELLING', wonder: 'WONDERING', shuffle: 'REASSEMBLING', summer: 'SUNBATHING', collect: 'COLLECTING', work: 'TYPING', watch: 'WATCHING', stretch: 'STRETCHING', dance: 'DANCING', sleep: 'SLEEPING', wake: 'WAKING' } as const;
           if (a === 'wake' && machine.state !== 'SLEEPING') return;
           if (machine.request(state[a], 'user', elapsed)) {
             playChime(usePetStore.getState().settings);
@@ -112,7 +116,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
       app.ticker.add(ticker => {
         const s = settings();
         regionClock += ticker.deltaMS;
-        const shouldSuspend = !cursor.visible || (s.fullscreenPause && cursor.fullscreen);
+        const shouldSuspend = suspendScene(cursor.visible, cursor.fullscreen, s.fullscreenPause, machine.state);
         app.ticker.maxFPS = shouldSuspend || machine.state === 'PAUSED' ? 5 : s.batterySaver || cursor.battery || s.reducedMotion ? 30 : 60;
         animator.pause(shouldSuspend || machine.state === 'PAUSED');
         if (shouldSuspend) { suspended = true; return; }
@@ -123,7 +127,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
           if ((s.quiet || s.reducedMotion || !s.adventures || lastSettings.fullScreenRoam !== s.fullScreenRoam) && traveling(machine.state)) machine.request('IDLE', 'user', elapsed);
           lastSettings = s;
         }
-        if (s.outfit !== outfit) { outfit = s.outfit; scene.removeChild(rig.root); rig.root.destroy({ children: true }); rig = createMochi(outfit); scene.addChildAt(rig.root, 0); }
+        if (s.outfit !== outfit || s.character !== character) { outfit = s.outfit; character = s.character; scene.removeChild(rig.root); rig.root.destroy({ children: true }); rig = createCharacter(s); scene.addChildAt(rig.root, 1); }
         scene.alpha = s.opacity;
         pip.visible = s.pip;
         const effects = s.particles > 0 && !s.reducedMotion && !s.batterySaver && !cursor.battery && !s.quiet;
@@ -133,12 +137,12 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
           if (preview) cursor.typing = s.workAlong && performance.now() - previewTypedAt < 1200;
           if (elapsed > behaviorAt) { behaviorAt = elapsed + 250; behavior.update(elapsed, machine, s, cursor); }
           const previousX = excursion.x;
-          let grip = 0, side = 1, hide = 0, float = 0, hop = 0;
+          let grip = 0, side = 1, hide = 0, float = 0, hop = 0, vanish = 0;
           if (!dragging && (returning || (traveling(machine.state) && bounds && !s.quiet && !s.reducedMotion))) {
-            const target = returning ? { x: 0, y: 0, grip: 0, side: 1, hide: 0, float: 0, hop: 0 } : adventure(machine.state, machine.actionSeconds, bounds!, s.playRadius, s.fullScreenRoam, routeVariant);
-            const ease = Math.min(1 - Math.exp(-dt * (returning ? 4 : 12)), returning ? 320 * dt / Math.max(1, Math.hypot(target.x - excursion.x, target.y - excursion.y)) : 1);
+            const target = returning ? { x: 0, y: 0, grip: 0, side: 1, hide: 0, float: 0, hop: 0, vanish: 0, warp: false } : adventure(machine.state, machine.actionSeconds, bounds!, s.playRadius, s.fullScreenRoam, routeVariant);
+            const ease = target.warp ? 1 : Math.min(1 - Math.exp(-dt * (returning ? 4 : 12)), returning ? 320 * dt / Math.max(1, Math.hypot(target.x - excursion.x, target.y - excursion.y)) : 1);
             excursion.x += (target.x - excursion.x) * ease; excursion.y += (target.y - excursion.y) * ease;
-            grip = target.grip; side = target.side; hide = target.hide; float = target.float; hop = target.hop;
+            grip = target.grip; side = target.side; hide = target.hide; float = target.float; hop = target.hop; vanish = target.vanish;
             const done = returning && Math.hypot(excursion.x, excursion.y) < .5;
             if (done) excursion = { x: 0, y: 0 };
             if (elapsed >= moveAt && !motionBusy && (done || Math.hypot(excursion.x - sent.x, excursion.y - sent.y) > .2)) {
@@ -148,24 +152,26 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
               if (done) { returning = false; wallTrip = false; }
             }
           }
+          scene.alpha = s.opacity * (1 - (machine.state === 'TELEPORTING' && motionBusy ? 1 : vanish));
+          climate.update(elapsed / 1000, s, machine.state, s.reducedMotion || s.batterySaver || cursor.battery);
           animator.motion = { speed: dt ? (excursion.x - previousX) / dt : 0, grip, side, hide, float, hop };
           animator.actionTime = machine.actionSeconds;
           animator.update(rig, elapsed / 1000, dt, cursor, s);
           if (s.reducedMotion) { pip.position.set(machine.state === 'SLEEPING' ? 220 : 243, machine.state === 'SLEEPING' ? 299 : 115); pip.rotation = 0; }
-          else pip.update(elapsed / 1000, dt, machine.state === 'SLEEPING', machine.state === 'PLAYING', machine.state === 'TYPING', animator.pose.jump);
+          else pip.update(elapsed / 1000, dt, machine.state === 'SLEEPING', machine.state === 'PLAYING', machine.state === 'TYPING' || machine.state === 'WRITING', animator.pose.jump);
           particles.update(dt, effects);
-          if (effects && elapsed > particleAt && ticker.FPS > 24) { particleAt = elapsed + 1800; particles.spawn(machine.state === 'SLEEPING' ? 'sleep' : machine.state === 'PLAYING' ? 'butterfly' : machine.state === 'DRINKING_TEA' ? 'bubble' : machine.state === 'DANCING' ? 'star' : 'dust', 207, 105, s.particles); }
+          if (effects && machine.state !== 'SLEEPING' && elapsed > particleAt && ticker.FPS > 24) { particleAt = elapsed + 1800; particles.spawn(machine.state === 'PLAYING' ? 'butterfly' : machine.state === 'DRINKING_TEA' ? 'bubble' : machine.state === 'DANCING' ? 'star' : 'dust', 207, 105, s.particles); }
           if (elapsed > statsAt) { statsAt = elapsed + 10000; if (s.stats && machine.state === 'SLEEPING') { const stats = usePetStore.getState().stats; usePetStore.getState().setStats({ ...stats, energy: Math.min(100, stats.energy + 1) }); } }
 
         }
         if (native && regionClock >= regionAt && !regionBusy) {
           regionAt = regionClock + (s.batterySaver || cursor.battery ? 66 : 33); regionBusy = true;
-          const bounds = [...rig.hitParts.map(part => part.getBounds()), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), rig.shadow.getBounds()];
+          const bounds = [...[rig.desk,rig.notebook,rig.snacks,rig.plant,rig.caption].filter(p=>p.visible).map(p=>p.getBounds()), ...climate.regions(), ...rig.hitParts.filter(part => part.visible && part.alpha > .01).map(part => part.getBounds()), ...(rig.blanket.visible ? [rig.quilt.getBounds(), rig.pillow.getBounds(), rig.moon.getBounds(), ...rig.nightStars.map(star => star.getBounds())] : []), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), rig.shadow.getBounds()];
           // Elliptical visual envelopes also define the real Windows input region.
           const regions: HitEllipse[] = bounds.map(b => {
             const x = Math.max(0, b.x - 3), y = Math.max(0, b.y - 3);
-            return { x, y, width: Math.min(320, b.x + b.width + 3) - x, height: Math.min(340, b.y + b.height + 3) - y };
-          }).filter(b => b.width > 0 && b.height > 0);
+            return { x, y, rectangular: s.character === 'walle' || rig.caption.visible || rig.desk.visible, width: Math.min(320, b.x + b.width + 3) - x, height: Math.min(340, b.y + b.height + 3) - y };
+          }).filter(b => b.width > 0 && b.height > 0).slice(0,64);
           void setRegions(regions).catch(reportError).finally(() => { regionBusy = false; });
         }
         if (import.meta.env.DEV && host.current) host.current.dataset.fps = String(Math.round(ticker.FPS));

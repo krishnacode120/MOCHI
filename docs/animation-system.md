@@ -31,3 +31,15 @@ The Windows adapter receives keyboard-event notifications on a dedicated message
 Hide-and-seek has approach, hide, two peeks, reveal, and return phases. The canvas clips artwork at the screen edge; native hit regions are intersected with the canvas before submission. Pip or a visible portion of Mochi remains nearby, and the tray retains reset/exit controls. Clicking Mochi interrupts hiding with a wave and eases the trip home. Quiet/reduced-motion modes suppress travel and peeking. Returning from an interrupted full-screen trip is speed-limited to avoid jumping across the desktop.
 
 A normal monitor work area is used, excluding the taskbar. This release explores the current monitor, not the entire multi-monitor virtual desktop. No application-window contents are inspected.
+
+## Character and scene update (0.5)
+
+`createCharacter.ts` shares an articulated rig across Mochi, WALL-E, and Olaf, with distinct vector geometry, eye spacing, limb shapes, and original props. Character choices persist with validated settings. Olaf adds scripted hugs, storytelling, short original thoughts, detachable body/nose choreography, summer posing, and a waddle. WALL-E adds a plant-collecting pose. No content or emotional analysis is performed.
+
+Blanket/pillow and moon/star work already present in the workspace was preserved and integrated. Desk, notebook, popcorn, cola, plant, and captions fade in and out independently. Rectangular native regions preserve robot, desk, and caption corners; other character envelopes remain elliptical. Region submission is clipped to the canvas and bounded at 64 parts.
+
+MOVIE is an explicit persistent action, toggleable from controls. It bypasses fullscreen animation suspension, while hidden windows still suspend. It prevents automatic sleep and spontaneous action interruptions until the user ends or changes the action. Keyboard activity and reminders still respect their fullscreen suppression.
+
+TELEPORTING uses discrete in-bounds destinations with brief fade-outs; the scene stays invisible while the native position update is in flight. FALLING uses acceleration, a rebound, and an eased recovery. Both honor reduced-motion and quiet travel suppression.
+
+`Climate.ts` provides pooled, decorative sun/rain/snow/wind scenes. Automatic cycling uses active renderer time, never location or forecast data. Sleep hides climate effects in favor of the moon/stars, and quiet mode hides them.

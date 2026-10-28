@@ -109,8 +109,9 @@ fn window_command(app: AppHandle, command: String) -> Result<(), String> {
 #[tauri::command]
 fn pet_action(app: AppHandle, action: String) -> Result<(), String> {
     if ![
-        "pet", "tea", "play", "run", "climb", "explore", "hideSeek", "hop", "work", "watch",
-        "stretch", "dance", "sleep", "wake", "pause", "resume", "outfit",
+        "movie", "write", "teleport", "fall", "hug", "story", "wonder", "shuffle", "summer",
+        "collect", "pet", "tea", "play", "run", "climb", "explore", "hideSeek", "hop", "work",
+        "watch", "stretch", "dance", "sleep", "wake", "pause", "resume", "outfit",
     ]
     .contains(&action.as_str())
     {
@@ -134,6 +135,16 @@ fn publish_status(app: AppHandle, window: WebviewWindow, state: String) -> Resul
         "EXPLORING",
         "HIDE_SEEK",
         "HOPSCOTCH",
+        "MOVIE",
+        "WRITING",
+        "TELEPORTING",
+        "FALLING",
+        "HUGGING",
+        "STORYTELLING",
+        "WONDERING",
+        "REASSEMBLING",
+        "SUNBATHING",
+        "COLLECTING",
         "TYPING",
         "WATCHING",
         "STRETCHING",

@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import type { MochiRig } from '../../characters/mochi/artwork';
+import { updateCharacter, type CharacterRig } from '../../characters/createCharacter';
 import type { CursorSample, PetState, Settings } from '../../types';
 
 export class Animator {
@@ -23,8 +23,8 @@ export class Animator {
     const p = this.pose;
     const t = gsap.timeline({ defaults: { ease: 'sine.inOut' } }).timeScale(speed); this.timeline = t;
     // Blend out of the current pose instead of resetting articulated parts.
-    t.to(p, { jump: 0, squash: 1, wave: 0, cup: 0, desk: state === 'TYPING' ? 1 : 0, duration: reduced ? .15 : .35 }, 0);
-    t.to(p, { sleep: state === 'SLEEPING' ? 1 : 0, duration: reduced ? .15 : state === 'WAKING' ? 2 : .8 }, 0);
+    t.to(p, { jump: 0, squash: 1, wave: 0, cup: 0, desk: state === 'TYPING' || state === 'WRITING' ? 1 : 0, duration: reduced ? .15 : .35 }, 0);
+    t.to(p, { sleep: state === 'SLEEPING' ? 1 : 0, duration: reduced ? .15 : state === 'WAKING' ? 2 : 1.4 }, 0);
     if (reduced) return;
     if (['RUNNING', 'EXPLORING', 'HOPSCOTCH', 'HIDE_SEEK'].includes(state)) t.to(p, { squash: .94, duration: .16 }, .2).to(p, { squash: 1, duration: .3 });
     if (state === 'JUMPING') t.to(p, { squash: .9, duration: .18 }, .35).to(p, { jump: -34, squash: 1.04, duration: .28 }).to(p, { jump: 0, squash: .94, duration: .3 }).to(p, { squash: 1, duration: .25 });
@@ -33,7 +33,7 @@ export class Animator {
     if (state === 'WAKING') t.to(p, { wave: -1.5, duration: .8 }, .35).to(p, { wave: 0, duration: .8 }, 1.8);
   }
   pause(paused: boolean) { if (paused) this.timeline?.pause(); else this.timeline?.resume(); }
-  update(r: MochiRig, _time: number, dt: number, c: CursorSample, s: Settings) {
+  update(r: CharacterRig, _time: number, dt: number, c: CursorSample, s: Settings) {
     this.clock += dt * s.speed;
     const t = this.clock, p = this.pose;
     const sleeping = this.state === 'SLEEPING';
@@ -64,6 +64,8 @@ export class Animator {
     r.rig.rotation = lerp(r.rig.rotation, lean + Math.sin(t * 1.4) * .035 * this.floating - this.hiding * this.wallSide * .06);
     r.leftLeg.rotation = lerp(r.leftLeg.rotation, cycle * .48 * this.stride * (1 - this.floating) + Math.sin(t * 5) * .25 * this.grip + Math.sin(t * 2) * .12 * this.floating + this.motion.hop * .35);
     r.rightLeg.rotation = lerp(r.rightLeg.rotation, -r.leftLeg.rotation);
+    r.body.scale.y = 1 - p.sleep * .35;
+    r.leftLeg.alpha = r.rightLeg.alpha = 1 - p.sleep;
     let left = .15 + cycle * .35 * this.stride - p.wave * .25;
     let right = -.15 - cycle * .35 * this.stride + p.wave;
     if (this.state === 'DANCING') { left = .8 + Math.sin(t * 5) * .4 * amount; right = -left; }
@@ -75,25 +77,35 @@ export class Animator {
     left = left * (1 - this.floating) - 2.8 * this.floating;
     right += Math.sin(t * 1.8) * .15 * this.floating;
     left += this.hiding * 1.8; right -= this.hiding * 1.8;
+    left = left * (1 - p.sleep) - .8 * p.sleep;
+    right = right * (1 - p.sleep) + 1.1 * p.sleep;
     r.leftArm.rotation = lerp(r.leftArm.rotation, left); r.rightArm.rotation = lerp(r.rightArm.rotation, right);
-    const gaze = !sleeping && s.followCursor && p.desk < .5;
+    const gaze = !sleeping && p.sleep < .1 && s.followCursor && p.desk < .5;
     const dx = Math.max(-1, Math.min(1, (c.localX - 160) / 180)) * facing;
     const dy = Math.max(-1, Math.min(1, (c.localY - 165) / 150));
     const watching = this.state === 'WATCHING' ? Math.sin(t * .9) * .035 * amount : 0;
-    r.head.rotation = lerp(r.head.rotation, (gaze ? dx * .055 : p.sleep * .09) + watching);
+    r.head.position.set(-35 * p.sleep, -119 + 54 * p.sleep);
+    r.head.scale.set(1 - p.sleep * .16);
+    r.head.rotation = lerp(r.head.rotation, (gaze ? dx * .055 : -p.sleep * .48) + watching);
+    r.pillow.visible = r.blanket.visible = r.night.visible = p.sleep > .01;
+    r.pillow.alpha = r.blanket.alpha = r.night.alpha = p.sleep;
+    r.blanket.scale.y = 1 + Math.sin(t * 1.3) * (gentle ? 0 : .012) * p.sleep;
+    r.moon.y = 139 + (gentle ? 0 : Math.sin(t * .6) * 2);
+    r.nightStars.forEach((star, i) => { star.alpha = gentle ? .9 : .75 + .25 * Math.sin(t * 1.1 + i * 1.6); });
     const hairEase = 1 - Math.exp(-dt * 4);
     r.hair.rotation += (Math.sin(t * 1.8) * .009 * amount - r.rig.rotation * .3 - r.hair.rotation) * hairEase;
     r.balloons.visible = this.floating > .01; r.balloons.alpha = this.floating;
     r.balloons.rotation = Math.sin(t * 1.2 - .6) * .022 * this.floating;
     r.eyes.scale.y = Math.max(.02, (1 - p.sleep) * (t < this.blinkUntil ? .06 : 1));
     r.eyes.visible = p.sleep < .9; r.lids.visible = p.sleep >= .9;
-    r.pupils.forEach((eye, i) => { eye.x = lerp(eye.x, (i ? 25 : -25) + (gaze ? dx * 3.2 : 0)); eye.y = lerp(eye.y, p.desk * 3 + (gaze ? dy * 2.5 : 0)); });
+    r.pupils.forEach((eye, i) => { eye.x = lerp(eye.x, (i ? r.eyeSpacing : -r.eyeSpacing) + (gaze ? dx * 3.2 : 0)); eye.y = lerp(eye.y, p.desk * 3 + (gaze ? dy * 2.5 : 0)); });
     r.yawn.visible = this.state === 'WAKING'; r.mouth.visible = !r.yawn.visible;
     r.cup.visible = p.cup > .01; r.cup.alpha = p.cup; r.cup.y = -40 - p.cup * 38; r.cup.x = 14 - p.cup * 10;
     r.steam.alpha = .5 + Math.sin(t * 2) * .2;
     r.laptop.visible = p.desk > .01; r.laptop.alpha = p.desk; r.laptop.y = -8 + (1 - p.desk) * 12;
     // Decorative strokes only: never display or echo actual keyboard text.
     r.codeLines.children.forEach((line, i) => { line.scale.x = gentle ? 1 : .55 + .45 * ((Math.floor(t * 3) + i * 2) % 5) / 4; });
+    updateCharacter(r, this.state, t, this.actionTime, dt, gentle, p.sleep);
     r.shadow.scale.x = 1 + p.jump / 160; r.shadow.alpha = .12 * (1 - Math.max(this.grip, this.floating, this.hiding));
   }
   actionTime = 0;

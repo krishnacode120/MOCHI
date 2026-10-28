@@ -198,12 +198,21 @@ mod win {
                 return Err("Could not allocate Windows hit region".into());
             }
             for e in ellipses {
-                let part = CreateEllipticRgn(
-                    (e.x * scale).floor() as i32,
-                    (e.y * scale).floor() as i32,
-                    ((e.x + e.width) * scale).ceil() as i32,
-                    ((e.y + e.height) * scale).ceil() as i32,
-                );
+                let part = if e.rectangular {
+                    CreateRectRgn(
+                        (e.x * scale).floor() as i32,
+                        (e.y * scale).floor() as i32,
+                        ((e.x + e.width) * scale).ceil() as i32,
+                        ((e.y + e.height) * scale).ceil() as i32,
+                    )
+                } else {
+                    CreateEllipticRgn(
+                        (e.x * scale).floor() as i32,
+                        (e.y * scale).floor() as i32,
+                        ((e.x + e.width) * scale).ceil() as i32,
+                        ((e.y + e.height) * scale).ceil() as i32,
+                    )
+                };
                 if part.0.is_null() {
                     let _ = DeleteObject(combined.into());
                     return Err("Could not allocate character region".into());

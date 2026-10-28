@@ -7,7 +7,7 @@ export class Behavior {
   private workAt = 0;
   constructor(private random = Math.random) {}
   update(now: number, m: PetMachine, s: Settings, cursor: CursorSample) {
-    if (m.state === 'PAUSED' || m.state === 'DRAGGING') return;
+    if (m.state === 'PAUSED' || m.state === 'DRAGGING' || m.state === 'MOVIE') return;
     if (m.state === 'SLEEPING') {
       if (!m.manualSleep && cursor.idleMs < 2000) m.request('WAKING', 'system', now);
       return;
@@ -27,8 +27,10 @@ export class Behavior {
     if (now < this.nextAction || !m.resting) return;
     this.nextAction = now + 22000 + this.random() * 26000;
     if (!s.randomActions || s.quiet || cursor.idleMs > s.calmAfter * 1000) return;
-    const choices: PetState[] = ['SITTING', 'WAVING', 'DRINKING_TEA', 'WATCHING', 'STRETCHING'];
-    if (!s.reducedMotion && s.adventures) choices.push('WALKING', 'RUNNING', 'CLIMBING', 'EXPLORING', 'HIDE_SEEK', 'HOPSCOTCH');
+    const choices: PetState[] = ['SITTING', 'WAVING', 'DRINKING_TEA', 'WATCHING', 'STRETCHING', 'WRITING'];
+    if (s.character === 'olaf') choices.push('HUGGING', 'STORYTELLING', 'WONDERING', 'REASSEMBLING', 'SUNBATHING');
+    if (s.character === 'walle') choices.push('COLLECTING', 'WATCHING');
+    if (!s.reducedMotion && s.adventures) choices.push('WALKING', 'RUNNING', 'CLIMBING', 'EXPLORING', 'HIDE_SEEK', 'HOPSCOTCH', 'TELEPORTING', 'FALLING');
     if (s.pip) choices.push('PLAYING');
     const options = choices.filter(x => x !== this.last);
     const next = options[Math.floor(this.random() * options.length)];

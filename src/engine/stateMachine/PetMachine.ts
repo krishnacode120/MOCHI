@@ -2,7 +2,7 @@ import type { PetState } from '../../types';
 import { tripSeconds } from '../physics/adventures';
 export type Source = 'idle' | 'system' | 'user';
 const resting = new Set<PetState>(['IDLE', 'CURIOUS', 'SITTING']);
-export const durations: Partial<Record<PetState, number>> = { WAVING: 2600, JUMPING: 1500, DANCING: 5400, DRINKING_TEA: 6500, WAKING: 2800, TYPING: 12000, WATCHING: 7000, STRETCHING: 5000, SITTING: 12000 };
+export const durations: Partial<Record<PetState, number>> = { WRITING: 18000, HUGGING: 5000, STORYTELLING: 9000, WONDERING: 7000, REASSEMBLING: 6500, SUNBATHING: 8000, COLLECTING: 8500, WAVING: 2600, JUMPING: 1500, DANCING: 5400, DRINKING_TEA: 6500, WAKING: 2800, TYPING: 12000, WATCHING: 7000, STRETCHING: 5000, SITTING: 12000 };
 export class PetMachine {
   state: PetState = 'IDLE';
   since = 0;

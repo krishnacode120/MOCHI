@@ -1,10 +1,10 @@
 import type { MovementBounds, PetState } from '../../types';
 
-export const traveling = (state: PetState) => ['WALKING', 'RUNNING', 'CLIMBING', 'PLAYING', 'EXPLORING', 'HIDE_SEEK', 'HOPSCOTCH'].includes(state);
-export const tripSeconds: Partial<Record<PetState, number>> = { WALKING: 7, RUNNING: 20, PLAYING: 10, CLIMBING: 24, EXPLORING: 36, HIDE_SEEK: 22, HOPSCOTCH: 12 };
+export const traveling = (state: PetState) => ['WALKING', 'RUNNING', 'CLIMBING', 'PLAYING', 'EXPLORING', 'HIDE_SEEK', 'HOPSCOTCH', 'TELEPORTING', 'FALLING'].includes(state);
+export const tripSeconds: Partial<Record<PetState, number>> = { TELEPORTING: 12, FALLING: 8, WALKING: 7, RUNNING: 20, PLAYING: 10, CLIMBING: 24, EXPLORING: 36, HIDE_SEEK: 22, HOPSCOTCH: 12 };
 export const ease = (x: number) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
 const mix = (a: number, b: number, t: number) => a + (b - a) * ease(t);
-export interface TripPose { x: number; y: number; grip: number; side: number; hide: number; float: number; hop: number }
+export interface TripPose { x: number; y: number; grip: number; side: number; hide: number; float: number; hop: number; vanish: number; warp: boolean }
 
 // Pure, absolute routes: no accumulated drift, including negative monitor coordinates.
 export function adventure(state: PetState, seconds: number, bounds: MovementBounds, radius: number, fullScreen = false, variant = 0): TripPose {
@@ -16,7 +16,19 @@ export function adventure(state: PetState, seconds: number, bounds: MovementBoun
   const top = wide ? bounds.top : Math.max(bounds.top, -radius);
   const bottom = wide ? bounds.bottom : Math.min(bounds.bottom, radius);
   const side = Math.abs(bounds.left) < Math.abs(bounds.right) ? -1 : 1;
-  const pose: TripPose = { x: 0, y: 0, grip: 0, side, hide: 0, float: 0, hop: 0 };
+  const pose: TripPose = { x: 0, y: 0, grip: 0, side, hide: 0, float: 0, hop: 0, vanish: 0, warp: false };
+  if (state === 'TELEPORTING') {
+    const stops = [[0,0],[left+(right-left)*(.15+variant*.2),top+(bottom-top)*.25],[left+(right-left)*.8,top+(bottom-top)*.75],[0,0]];
+    const index=Math.min(3,Math.floor(time/3));
+    [pose.x,pose.y]=stops[index]; pose.warp=true;
+    pose.vanish=Math.max(...[3,6,9].map(at=>Math.max(0,1-Math.abs(time-at)/.45)));
+    return pose;
+  }
+  if (state === 'FALLING') {
+    const floor=bottom, lift=Math.max(top,-100);
+    pose.y=time<1.5?mix(0,lift,time/1.5):time<3?lift+(floor-lift)*Math.min(1,((time-1.5)/1.5)**2):time<4.5?floor-Math.min(45,floor-top)*Math.abs(Math.sin((time-3)/1.5*Math.PI)):mix(floor,0,(time-4.5)/3.5);
+    return pose;
+  }
   if (state === 'CLIMBING') {
     const wall = side < 0 ? bounds.left : bounds.right;
     pose.x = time < 5 ? mix(0, wall, time / 5) : time < 19 ? wall : mix(wall, 0, (time - 19) / 5);

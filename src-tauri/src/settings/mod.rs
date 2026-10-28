@@ -5,6 +5,8 @@ use tauri::{AppHandle, Manager};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
+    pub character: String,
+    pub climate: String,
     pub size: f64,
     pub outfit: String,
     pub speed: f64,
@@ -46,6 +48,8 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            character: "mochi".into(),
+            climate: "auto".into(),
             size: 1.,
             outfit: "lavender".into(),
             speed: 1.,
@@ -95,6 +99,12 @@ fn bounded(value: &mut f64, min: f64, max: f64, fallback: f64) {
 }
 impl Settings {
     pub fn validate(&mut self) {
+        if !["mochi", "walle", "olaf"].contains(&self.character.as_str()) {
+            self.character = "mochi".into();
+        }
+        if !["off", "auto", "sunny", "rain", "snow", "wind"].contains(&self.climate.as_str()) {
+            self.climate = "auto".into();
+        }
         bounded(&mut self.size, 0.65, 1.6, 1.);
         bounded(&mut self.speed, 0.5, 1.8, 1.);
         bounded(&mut self.sensitivity, 0.3, 2., 1.);

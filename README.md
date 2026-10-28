@@ -2,13 +2,24 @@
 
 An original, offline Windows desktop pet built with Tauri 2, Rust, React, TypeScript, PixiJS, GSAP, and Zustand. Mochi wears a soft hoodie, follows your pointer with curious eyes, takes little tea breaks, and rests when you do. Pip is an optional floating companion.
 
-**Status: Windows release build and NSIS installer produced successfully.** A focused native check confirmed rendering, the interaction menu, Settings, saved changes, single-instance reopening, and clean exit. Version 0.4.0 adds full-screen adventures, hide-and-seek, balloon tours, hopscotch, playtime with Pip, and a typing companion. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
+**Status: Windows release build and NSIS installer produced successfully.** Version 0.5.0 adds selectable WALL-E and Olaf, blanket naps, movie snacks, a writing desk, teleporting, playful falls, and decorative weather. The installed app passed a focused visual check of the characters and cozy props. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
 
 ## Install and use
 
-[Download MOCHI 0.4.0 for Windows x64](downloads/Mochi_0.4.0_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
+[Download MOCHI 0.5.0 for Windows x64](downloads/Mochi_0.5.0_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
 
 Double-click **Mochi Start-Stop** on your desktop to start the companion. Double-click the same shortcut again to stop it cleanly and save its settings. Right-click Mochi or its tray icon to open Settings.
+
+## Characters and cozy scenes
+
+- **Settings → Character → Your desktop friend:** choose Mochi, WALL-E, or Olaf. The two new characters are hand-drawn, procedural fan interpretations with distinct silhouettes and animations.
+- **Olaf:** warm hugs, expressive storytelling, curious thoughts, detachable snowball/head/nose antics, a playful waddle, and dreams of summer. These are scripted character behaviors, not real emotional or screen-content analysis.
+- **WALL-E:** tread feet, binocular eyes, articulated arms, and a little plant-collecting moment.
+- **Blanket naps:** automatic inactivity sleep curls the character onto a pillow beneath a quilt, with a moon and twinkling stars. Sleep thresholds remain in Behavior settings.
+- **Movie time:** popcorn and cola accompany you during fullscreen playback. Start and end Movie time from the action buttons or tray; Mochi does not identify or read movies automatically.
+- **Work with me / Write at desk:** a small wooden desk, laptop or notebook, and hand/pencil movement. No actual typed text is displayed or saved.
+- **Teleport / Tumble down:** fade between screen positions, or fall, bounce, and recover. Routes remain inside the current monitor work area and return home; reduced motion suppresses travel.
+- **Settings → Behavior → Weather scene:** Off, Auto, Sunny, Rain, Snow, or Wind. Auto cycles every 75 active seconds. These are local decorative scenes, without location access or live forecasts. Quiet mode hides weather; reduced motion keeps it still.
 
 ## A companion for your workday
 
@@ -82,7 +93,7 @@ npm run build
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-The frontend suite contains fifteen behavioral and boundary tests, rather than UI snapshot or redundant implementation tests. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
+The frontend suite contains eighteen behavioral and boundary tests, rather than UI snapshot or redundant implementation tests. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
 
 ## Build an installer
 
@@ -91,7 +102,7 @@ npm run tauri build
 Get-ChildItem .\src-tauri\target\release\bundle\nsis\*.exe
 ```
 
-The output is `src-tauri/target/release/bundle/nsis/Mochi_0.4.0_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
+The output is `src-tauri/target/release/bundle/nsis/Mochi_0.5.0_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
 
 ## Project map
 
