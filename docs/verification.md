@@ -1,6 +1,18 @@
-# Verification status — 27 October 2026
+# Verification status — 28 October 2026
 
-## MOCHI 0.2.0 — current delivery
+## MOCHI 0.4.0 — current delivery
+
+- TypeScript and the production frontend build passed.
+- All 15 focused frontend checks passed. New coverage verifies work-area bounds, full-area corner visits, return-home endpoints, automatic reveal, finding a hidden pet, typing opt-out/quiet mode, protected user actions, and action-time continuity across speed changes.
+- The 0.3 preview native check verified the laptop/hand artwork, native wall-climbing movement, running movement, and action controls. A quick-key polling gap found during this check led to replacement with activity-only Windows event notifications in 0.4.
+- Native release compilation and NSIS packaging passed. The per-user upgrade returned exit code 0; existing size (0.65), speed (1.5), and behavior preferences were retained.
+- The 0.4 balloon artwork and actual travel into the upper screen rendered in the installed app; native hide-and-seek visibly peeks from the screen edge. The expanded Character action buttons rendered. No screenshots containing the user's background windows were added to the repository.
+- Automatic keyboard activation could not be confirmed through the computer-use tool's synthetic key presses. The event listener compiled and its behavior integration is covered by the focused frontend tests; a real typing check remains manual. The callback never reads key-event payloads or typed text.
+- After the final update, Start-Stop shutdown completed with zero MOCHI processes, then the installed app was restarted. The desktop shortcut still targets the installed executable with --toggle.
+- Final installer: downloads/Mochi_0.4.0_x64-setup.exe — 1,555,703 bytes. SHA-256: a9acf490ba2130552b3d9de77d39101bb7748bcca96ad2f99acc41403b618bde.
+- Multi-monitor/fractional DPI, long-duration performance, and uninstallation remain manual. No full Rust test rebuild, soak test, or unrelated UI suite was added.
+
+## MOCHI 0.2.0 — previous delivery
 
 - TypeScript and production frontend build passed. The native release and NSIS installer were rebuilt after fixing a settings-initialization race during window creation.
 - Four focused reminder-clock tests passed: inactive time/resume gaps, five-minute snooze, spacing/disabled reminders, and interval changes. The full native test suite was not rerun.
@@ -52,7 +64,7 @@ The final frontend rebuild passed with Pixi's CSP-compatible static bindings: th
 ## Known limits
 
 - The Windows source compiled and passed a focused launch check. Multi-monitor/fractional DPI, tray restoration of click-through, fullscreen/battery behavior, cold-start persistence, and uninstallation have not been manually verified. The 0.2.0 installer was run for the current user.
-- Geometric regions may include a few transparent pixels and clip fast-moving artwork between 10 Hz updates. Tiny effects are included in the native region so they remain visible.
+- Geometric regions may include a few transparent pixels and clip fast-moving artwork between 30 Hz updates (15 Hz on battery). Tiny effects are included in the native region so they remain visible.
 - Fullscreen detection compares the foreground window bounds to its monitor; some borderless/maximized apps can be classified conservatively. Pause behavior is configurable.
 - Hidden/fullscreen/paused rendering retains a low-frequency heartbeat. Memory and all-day CPU/GPU use are unmeasured.
 - No installer signing, user-facing sprite importer, arbitrary application-window perching, or Live2D integration is configured.

@@ -52,7 +52,22 @@ export function createMochi(outfit: Settings['outfit']) {
   const cup = new Container(); cup.position.set(14, -40);
   cup.addChild(new Graphics().ellipse(17, -4, 9, 8).stroke({ color: ink, width: 2.5 }).roundRect(-17, -17, 33, 28, 7).fill(0xfff6e7).stroke({ color: ink, width: 2.3 }).ellipse(-1, -16, 16, 4).fill(0xb18f73).stroke({ color: ink, width: 1.6 }));
   const steam = new Graphics().moveTo(-6, -25).bezierCurveTo(-15, -35, 4, -38, -5, -48).moveTo(6, -26).quadraticCurveTo(15, -36, 7, -41).stroke({ color: 0xfff8ed, width: 2, alpha: .8 }); cup.addChild(steam); rig.addChild(cup); cup.visible = false;
-  return { root, rig, shadow, body, head, hair, eyes, pupils, lids, mouth, yawn, leftArm, rightArm, leftLeg, rightLeg, cup, steam, blush,
+  const laptop = new Container(); laptop.position.set(0, -8);
+  laptop.addChild(new Graphics().roundRect(-43, -38, 86, 48, 6).fill(0xb6a5cf).stroke({ color: ink, width: 2 }).roundRect(-36, -31, 72, 32, 3).fill(0xf3eff8));
+  const codeLines = new Container(); laptop.addChild(codeLines);
+  for (let i = 0; i < 3; i++) { const line = new Graphics().roundRect(-29, -25 + i * 8, 26 + i * 8, 3, 1).fill(i === 1 ? 0xa2b6a0 : 0xc0aecf); codeLines.addChild(line); }
+  laptop.addChild(new Graphics().roundRect(-49, 9, 98, 9, 4).fill(0xd9cbe6).stroke({ color: ink, width: 1.7 }));
+  rig.addChild(laptop, leftArm, rightArm); laptop.visible = false;
+  const balloons = new Container(); const balloonParts: Graphics[] = [];
+  const strings = new Graphics(); balloons.addChild(strings);
+  for (const [x, y, color] of [[-104, -219, 0xe9b4bf], [-74, -239, 0xc0b0df], [-43, -216, 0xf0d28f]]) {
+    strings.moveTo(x, y + 24).quadraticCurveTo(x - 12, -116, -40, -54).stroke({ color: 0x8f819e, width: 1.5 });
+    const balloon = ellipse(19, 25, color); balloon.position.set(x, y);
+    balloon.addChild(new Graphics().ellipse(-6, -8, 4, 7).fill({ color: 0xffffff, alpha: .5 }));
+    balloons.addChild(balloon); balloonParts.push(balloon);
+  }
+  rig.addChildAt(balloons, 0); balloons.visible = false;
+  return { root, rig, shadow, body, head, hair, eyes, pupils, lids, mouth, yawn, leftArm, rightArm, leftLeg, rightLeg, cup, steam, blush, laptop, codeLines, balloons, balloonParts, strings,
     hitParts: [hoodie, hood, earL, earR, tuft, leftArm, rightArm, leftLeg, rightLeg] };
 }
 export type MochiRig = ReturnType<typeof createMochi>;

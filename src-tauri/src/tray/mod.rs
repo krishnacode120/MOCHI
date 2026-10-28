@@ -13,6 +13,13 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         ("pet", "Pet Mochi"),
         ("tea", "Give Tea"),
         ("play", "Play"),
+        ("run", "Run Around"),
+        ("climb", "Climb the Wall"),
+        ("explore", "Balloon Tour"),
+        ("hideSeek", "Hide and Seek"),
+        ("hop", "Hopscotch"),
+        ("work", "Work With Me"),
+        ("stretch", "Stretch"),
         ("dance", "Dance"),
         ("sleep", "Sleep"),
         ("wake", "Wake"),
@@ -96,7 +103,8 @@ pub fn dispatch(app: &AppHandle, command: &str) -> Result<(), String> {
             }
             crate::apply_settings(app, s)
         }
-        "pet" | "tea" | "play" | "dance" | "sleep" | "wake" | "pause" | "resume" | "outfit" => app
+        "pet" | "tea" | "play" | "run" | "climb" | "explore" | "hideSeek" | "hop" | "work"
+        | "watch" | "stretch" | "dance" | "sleep" | "wake" | "pause" | "resume" | "outfit" => app
             .emit_to("pet", "action", command)
             .map_err(|e| e.to_string()),
         _ => Err("Unknown tray command".into()),

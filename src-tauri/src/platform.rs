@@ -8,23 +8,27 @@ mod win {
     use windows::{
         core::PCWSTR,
         Win32::{
-            Foundation::{HWND, POINT, RECT},
+            Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
             Graphics::Gdi::{
                 CombineRgn, CreateEllipticRgn, CreateRectRgn, DeleteObject, GetMonitorInfoW,
                 MonitorFromWindow, SetWindowRgn, MONITORINFO, MONITOR_DEFAULTTONEAREST, RGN_OR,
             },
             Storage::FileSystem::{MoveFileExW, MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH},
             System::{
+                LibraryLoader::GetModuleHandleW,
                 Power::{GetSystemPowerStatus, SYSTEM_POWER_STATUS},
                 SystemInformation::GetTickCount,
+                Threading::GetCurrentThreadId,
             },
             UI::{
                 Input::KeyboardAndMouse::{
                     GetAsyncKeyState, GetLastInputInfo, LASTINPUTINFO, VK_LBUTTON,
                 },
                 WindowsAndMessaging::{
-                    GetCursorPos, GetDesktopWindow, GetForegroundWindow, GetShellWindow,
-                    GetWindowRect, MessageBoxW, MB_ICONERROR, MB_OK,
+                    CallNextHookEx, GetCursorPos, GetDesktopWindow, GetForegroundWindow,
+                    GetMessageW, GetShellWindow, GetWindowRect, MessageBoxW, PostThreadMessageW,
+                    SetWindowsHookExW, UnhookWindowsHookEx, MB_ICONERROR, MB_OK, MSG,
+                    WH_KEYBOARD_LL, WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN,
                 },
             },
         },
@@ -53,6 +57,87 @@ mod win {
     }
     pub fn left_down() -> bool {
         unsafe { GetAsyncKeyState(VK_LBUTTON.0 as i32) < 0 }
+    }
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static KEYBOARD_ENABLED: AtomicBool = AtomicBool::new(false);
+    static KEYBOARD_ACTIVITY: AtomicBool = AtomicBool::new(false);
+    unsafe extern "system" fn keyboard_event(code: i32, kind: WPARAM, data: LPARAM) -> LRESULT {
+        // Do not dereference data: it contains key details that Mochi never needs.
+        // Record only that a key-down event occurred, then always pass it through.
+        if code >= 0
+            && matches!(kind.0 as u32, WM_KEYDOWN | WM_SYSKEYDOWN)
+            && KEYBOARD_ENABLED.load(Ordering::Relaxed)
+        {
+            KEYBOARD_ACTIVITY.store(true, Ordering::Relaxed);
+        }
+        unsafe { CallNextHookEx(None, code, kind, data) }
+    }
+    pub struct KeyboardActivity {
+        thread: u32,
+        handle: Option<std::thread::JoinHandle<()>>,
+    }
+    impl KeyboardActivity {
+        pub fn start() -> Result<Self, String> {
+            let (send, receive) = std::sync::mpsc::sync_channel(1);
+            let handle = std::thread::spawn(move || unsafe {
+                let hook = GetModuleHandleW(None).and_then(|module| {
+                    SetWindowsHookExW(
+                        WH_KEYBOARD_LL,
+                        Some(keyboard_event),
+                        Some(HINSTANCE(module.0)),
+                        0,
+                    )
+                });
+                match hook {
+                    Ok(hook) => {
+                        // GetMessage owns the event loop on this dedicated thread;
+                        // the callback only flips an atomic flag and cannot block input.
+                        let mut message = MSG::default();
+                        // Create the message queue before exposing the thread id.
+                        let _ = windows::Win32::UI::WindowsAndMessaging::PeekMessageW(
+                            &mut message,
+                            None,
+                            0,
+                            0,
+                            windows::Win32::UI::WindowsAndMessaging::PM_NOREMOVE,
+                        );
+                        let _ = send.send(Ok(GetCurrentThreadId()));
+                        while GetMessageW(&mut message, None, 0, 0).0 > 0 {}
+                        let _ = UnhookWindowsHookEx(hook);
+                    }
+                    Err(error) => {
+                        let _ = send.send(Err(error.to_string()));
+                    }
+                }
+            });
+            match receive.recv().map_err(|e| e.to_string())? {
+                Ok(thread) => Ok(Self {
+                    thread,
+                    handle: Some(handle),
+                }),
+                Err(error) => {
+                    let _ = handle.join();
+                    Err(error)
+                }
+            }
+        }
+        pub fn sample(&self, enabled: bool) -> bool {
+            KEYBOARD_ENABLED.store(enabled, Ordering::Relaxed);
+            let active = KEYBOARD_ACTIVITY.swap(false, Ordering::Relaxed);
+            enabled && active
+        }
+    }
+    impl Drop for KeyboardActivity {
+        fn drop(&mut self) {
+            KEYBOARD_ENABLED.store(false, Ordering::Relaxed);
+            KEYBOARD_ACTIVITY.store(false, Ordering::Relaxed);
+            let posted = unsafe { PostThreadMessageW(self.thread, WM_QUIT, WPARAM(0), LPARAM(0)) };
+            if posted.is_ok() {
+                if let Some(handle) = self.handle.take() {
+                    let _ = handle.join();
+                }
+            }
+        }
     }
     pub fn idle_ms() -> Result<u64, String> {
         unsafe {

@@ -1,11 +1,11 @@
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { defaults, initialStats, usePetStore, validateSettings } from '../stores/settings';
-import type { Action, CursorSample, HitEllipse, Persisted, Settings, Stats, WorkArea } from '../types';
+import type { Action, CursorSample, HitEllipse, MovementBounds, Persisted, Settings, Stats, WorkArea } from '../types';
 export const native = isTauri();
 export const previewReminder = (kind: number) => native ? invoke<void>('preview_reminder', { kind }) : Promise.resolve(window.open('?view=reminder', 'mochi-reminder-preview', 'width=320,height=220')).then(() => {});
 const previewKey = 'mochi-preview-v1';
-export const cursor: CursorSample = { x: 160, y: 180, localX: 160, localY: 180, velocity: 0, stationaryMs: 0, idleMs: 0, fullscreen: false, battery: false, visible: true };
+export const cursor: CursorSample = { x: 160, y: 180, localX: 160, localY: 180, velocity: 0, stationaryMs: 0, idleMs: 0, fullscreen: false, battery: false, visible: true, typing: false };
 const actions = new Set<(action: Action) => void>();
 export const onAction = (fn: (action: Action) => void) => { actions.add(fn); return () => { actions.delete(fn); }; };
 export async function action(action: Action) {
@@ -37,7 +37,8 @@ export async function command(name: 'show' | 'hide' | 'settings' | 'reset' | 'qu
 export const setRegions = (regions: HitEllipse[]) => native ? invoke<void>('set_hit_regions', { regions }) : Promise.resolve();
 export const beginDrag = () => native ? invoke<void>('begin_drag') : Promise.resolve();
 export const endDrag = () => native ? invoke<void>('end_drag') : Promise.resolve();
-export const movePet = (dx: number, dy: number, returning = false) => native ? invoke<void>('move_pet', { dx, dy, returning }) : Promise.resolve();
+export const movePet = (dx: number, dy: number, returning = false, wall = false) => native ? invoke<void>('move_pet', { dx, dy, returning, wall }) : Promise.resolve();
+export const movementBounds = () => native ? invoke<MovementBounds>('movement_bounds') : Promise.resolve({ left: -180, right: 12, top: -400, bottom: 0 });
 export const monitors = () => native ? invoke<WorkArea[]>('get_monitors') : Promise.resolve([{ name: 'Browser preview', x: 0, y: 0, width: 1920, height: 1080, scale: 1 }]);
 export async function connect() {
   const cleanups: (() => void)[] = [];

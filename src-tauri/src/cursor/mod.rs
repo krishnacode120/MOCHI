@@ -25,6 +25,7 @@ pub struct Sample {
     fullscreen: bool,
     battery: bool,
     visible: bool,
+    typing: bool,
 }
 pub struct Worker {
     stop: Arc<AtomicBool>,
@@ -43,6 +44,9 @@ impl Worker {
             let mut battery = false;
             let mut last_error = Instant::now() - Duration::from_secs(60);
             let mut next_reminder = Instant::now();
+            let mut typed_at: Option<Instant> = None;
+            let mut keyboard: Option<platform::KeyboardActivity> = None;
+            let mut keyboard_retry = Instant::now();
             while !token.load(Ordering::Relaxed) {
                 let now = Instant::now();
                 let result = (|| -> Result<u64, String> {
@@ -81,6 +85,33 @@ impl Worker {
                     let position = window.outer_position().map_err(|e| e.to_string())?;
                     let scale = window.scale_factor().map_err(|e| e.to_string())? * s.size;
                     let visible = window.is_visible().map_err(|e| e.to_string())?;
+                    let paused = app.state::<crate::Paused>().0.load(Ordering::Relaxed);
+                    let can_work = s.work_along && !s.quiet && visible && !paused && !fullscreen;
+                    if !s.work_along {
+                        keyboard = None;
+                    }
+                    if s.work_along && keyboard.is_none() && now >= keyboard_retry {
+                        keyboard_retry = now + Duration::from_secs(60);
+                        match platform::KeyboardActivity::start() {
+                            Ok(observer) => keyboard = Some(observer),
+                            Err(error) => {
+                                let _ = app.emit(
+                                    "native-error",
+                                    format!("Typing reactions unavailable: {error}"),
+                                );
+                            }
+                        }
+                    }
+                    if keyboard
+                        .as_ref()
+                        .map(|observer| observer.sample(can_work))
+                        .unwrap_or(false)
+                    {
+                        typed_at = Some(now);
+                    }
+                    if !can_work {
+                        typed_at = None;
+                    }
                     let sample = Sample {
                         x: cursor.x,
                         y: cursor.y,
@@ -92,10 +123,12 @@ impl Worker {
                         fullscreen,
                         battery,
                         visible,
+                        typing: typed_at
+                            .map(|at| now.duration_since(at) < Duration::from_millis(1200))
+                            .unwrap_or(false),
                     };
                     app.emit_to("pet", "cursor", sample)
                         .map_err(|e| e.to_string())?;
-                    let paused = app.state::<crate::Paused>().0.load(Ordering::Relaxed);
                     if now >= next_reminder {
                         next_reminder = now + Duration::from_secs(1);
                         let resting = app.state::<crate::Resting>().0.load(Ordering::Relaxed);

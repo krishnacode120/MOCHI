@@ -2,7 +2,7 @@ use crate::{
     monitor, platform,
     settings::{Config, Position},
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewWindow};
 #[derive(Debug, Clone, Deserialize)]
@@ -171,7 +171,41 @@ pub fn drag_tick(app: &AppHandle, cursor: Position) -> Result<(), String> {
     }
     Ok(())
 }
-pub fn move_relative(app: &AppHandle, dx: f64, dy: f64, returning: bool) -> Result<(), String> {
+#[derive(Serialize)]
+pub struct MovementBounds {
+    left: f64,
+    right: f64,
+    top: f64,
+    bottom: f64,
+}
+pub fn movement_bounds(app: &AppHandle) -> Result<MovementBounds, String> {
+    let window = pet(app)?;
+    let p = window.outer_position().map_err(|e| e.to_string())?;
+    let base = app
+        .state::<Desktop>()
+        .home
+        .lock()
+        .map_err(|e| e.to_string())?
+        .unwrap_or(Position { x: p.x, y: p.y });
+    let areas = monitor::all(app)?;
+    let area = monitor::nearest(&areas, base);
+    let size = window.outer_size().map_err(|e| e.to_string())?;
+    let scale = window.scale_factor().map_err(|e| e.to_string())?
+        * app.state::<Config>().snapshot().settings.size;
+    Ok(MovementBounds {
+        left: (area.x - base.x) as f64 / scale,
+        right: (area.x + area.width.saturating_sub(size.width) as i32 - base.x) as f64 / scale,
+        top: (area.y - base.y) as f64 / scale,
+        bottom: (area.y + area.height.saturating_sub(size.height) as i32 - base.y) as f64 / scale,
+    })
+}
+pub fn move_relative(
+    app: &AppHandle,
+    dx: f64,
+    dy: f64,
+    returning: bool,
+    wall: bool,
+) -> Result<(), String> {
     if !dx.is_finite() || !dy.is_finite() {
         return Err("Invalid movement".into());
     }
@@ -188,8 +222,32 @@ pub fn move_relative(app: &AppHandle, dx: f64, dy: f64, returning: bool) -> Resu
     let area = monitor::nearest(&areas, base);
     let scale = window.scale_factor().map_err(|e| e.to_string())? * s.size;
     let dest = Position {
-        x: base.x + (dx.clamp(-s.play_radius, s.play_radius) * scale) as i32,
-        y: base.y + (dy.clamp(-s.play_radius, s.play_radius) * scale) as i32,
+        x: base.x
+            + (dx.clamp(
+                if wall {
+                    -(area.width as f64) / scale
+                } else {
+                    -s.play_radius
+                },
+                if wall {
+                    area.width as f64 / scale
+                } else {
+                    s.play_radius
+                },
+            ) * scale) as i32,
+        y: base.y
+            + (dy.clamp(
+                if wall {
+                    -(area.height as f64) / scale
+                } else {
+                    -s.play_radius
+                },
+                if wall {
+                    area.height as f64 / scale
+                } else {
+                    s.play_radius
+                },
+            ) * scale) as i32,
     };
     let size = window.outer_size().map_err(|e| e.to_string())?;
     let dest = monitor::clamp(dest, size.width, size.height, area);

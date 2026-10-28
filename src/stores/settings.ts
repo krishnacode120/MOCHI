@@ -4,6 +4,7 @@ export const defaults: Settings = {
   size: 1, outfit: 'lavender', speed: 1, sensitivity: 1, pip: true, opacity: 1,
   alwaysOnTop: true, reducedMotion: false, particles: 18, theme: 'cream', autoSleep: true,
   randomActions: true, followCursor: true, interactions: true, quiet: false, stats: true,
+  workAlong: true, adventures: true, fullScreenRoam: true,
   startup: false, clickThrough: false, monitor: 0, fullscreenPause: true, batterySaver: false,
   muted: true, volume: 0.2, calmAfter: 30, sitAfter: 120, sleepAfter: 300,
   snapEdges: true, playRadius: 180,

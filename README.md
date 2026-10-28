@@ -2,13 +2,25 @@
 
 An original, offline Windows desktop pet built with Tauri 2, Rust, React, TypeScript, PixiJS, GSAP, and Zustand. Mochi wears a soft hoodie, follows your pointer with curious eyes, takes little tea breaks, and rests when you do. Pip is an optional floating companion.
 
-**Status: Windows release build and NSIS installer produced successfully.** A focused native check confirmed rendering, the interaction menu, Settings, saved changes, single-instance reopening, and clean exit. Version 0.2.0 adds tested reminder scheduling and a verified desktop Start-Stop shortcut. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
+**Status: Windows release build and NSIS installer produced successfully.** A focused native check confirmed rendering, the interaction menu, Settings, saved changes, single-instance reopening, and clean exit. Version 0.4.0 adds full-screen adventures, hide-and-seek, balloon tours, hopscotch, playtime with Pip, and a typing companion. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
 
 ## Install and use
 
-[Download MOCHI 0.2.0 for Windows x64](downloads/Mochi_0.2.0_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
+[Download MOCHI 0.4.0 for Windows x64](downloads/Mochi_0.4.0_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
 
 Double-click **Mochi Start-Stop** on your desktop to start the companion. Double-click the same shortcut again to stop it cleanly and save its settings. Right-click Mochi or its tray icon to open Settings.
+
+## A companion for your workday
+
+- **Roam the whole screen:** enabled by default. Runs use the full width of the current monitor; balloon tours visit its upper and lower corners. All trips stay inside the work area and return home. Turn this off in Settings → Behavior for smaller adventures.
+- **Climb wall:** approach the nearest screen edge, climb up, pause, and come down. It does not climb arbitrary application windows.
+- **Hide & seek:** Mochi scoots to an edge and peeks out. Click the peeking character (or Pet Mochi) to find them and get a wave. They automatically reappear if you do not join in.
+- **Balloon tour / Hopscotch:** original balloons carry Mochi around the screen; hopscotch adds a series of playful hops.
+- **Play with Pip:** Pip swoops around Mochi during a little chase. **Watch** adds curious glances and head tilts; **Stretch** gives Mochi a break too.
+- **Type along with me:** enabled under Settings → Behavior. Mochi opens a tiny laptop when keyboard activity is detected, taps along, then settles when you stop. The laptop shows decorative strokes, never your actual text.
+- Only a transient keyboard-active boolean is sent to the renderer. Key identities and typed text are never retained, logged, or transmitted. No screenshots, document reading, camera, AI model, or screen understanding is involved.
+- Settings → Character and the right-click menu offer immediate action buttons. Settings → Behavior lets you disable spontaneous running/climbing or typing reactions independently. Quiet mode suppresses automatic reactions; reduced motion removes travel and vigorous animation.
+- Motion now uses eased routes, blended poses, frame-rate-independent Pip movement, and more frequent silhouette updates. Speed changes preserve action progress.
 
 ## Gentle reminders
 
@@ -70,7 +82,7 @@ npm run build
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-The frontend suite contains ten behavioral and boundary tests, rather than UI snapshot or redundant implementation tests. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
+The frontend suite contains fifteen behavioral and boundary tests, rather than UI snapshot or redundant implementation tests. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
 
 ## Build an installer
 
@@ -79,7 +91,7 @@ npm run tauri build
 Get-ChildItem .\src-tauri\target\release\bundle\nsis\*.exe
 ```
 
-The output is `src-tauri/target/release/bundle/nsis/Mochi_0.2.0_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
+The output is `src-tauri/target/release/bundle/nsis/Mochi_0.4.0_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
 
 ## Project map
 

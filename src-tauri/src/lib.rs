@@ -109,7 +109,8 @@ fn window_command(app: AppHandle, command: String) -> Result<(), String> {
 #[tauri::command]
 fn pet_action(app: AppHandle, action: String) -> Result<(), String> {
     if ![
-        "pet", "tea", "play", "dance", "sleep", "wake", "pause", "resume", "outfit",
+        "pet", "tea", "play", "run", "climb", "explore", "hideSeek", "hop", "work", "watch",
+        "stretch", "dance", "sleep", "wake", "pause", "resume", "outfit",
     ]
     .contains(&action.as_str())
     {
@@ -128,6 +129,14 @@ fn publish_status(app: AppHandle, window: WebviewWindow, state: String) -> Resul
         "IDLE",
         "CURIOUS",
         "WALKING",
+        "RUNNING",
+        "CLIMBING",
+        "EXPLORING",
+        "HIDE_SEEK",
+        "HOPSCOTCH",
+        "TYPING",
+        "WATCHING",
+        "STRETCHING",
         "SITTING",
         "PLAYING",
         "SLEEPING",
@@ -213,9 +222,18 @@ fn move_pet(
     dx: f64,
     dy: f64,
     returning: bool,
+    wall: bool,
 ) -> Result<(), String> {
     only_pet(&window)?;
-    desktop::move_relative(&app, dx, dy, returning)
+    desktop::move_relative(&app, dx, dy, returning, wall)
+}
+#[tauri::command]
+fn movement_bounds(
+    app: AppHandle,
+    window: WebviewWindow,
+) -> Result<desktop::MovementBounds, String> {
+    only_pet(&window)?;
+    desktop::movement_bounds(&app)
 }
 struct Initialized(std::sync::atomic::AtomicBool);
 struct Quitting(std::sync::atomic::AtomicBool);
@@ -332,6 +350,7 @@ pub fn run() {
             begin_drag,
             end_drag,
             move_pet,
+            movement_bounds,
             current_reminder,
             preview_reminder,
             respond_reminder

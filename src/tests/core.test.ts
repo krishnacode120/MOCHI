@@ -4,7 +4,7 @@ import { Behavior } from '../engine/behavior/Behavior';
 import { defaults, validateSettings } from '../stores/settings';
 import { clampPosition, toLocal } from '../engine/physics/coordinates';
 import type { CursorSample } from '../types';
-const sample: CursorSample = { x: 900, y: 10, localX: 900, localY: 10, velocity: 0, stationaryMs: 0, idleMs: 0, fullscreen: false, battery: false, visible: true };
+const sample: CursorSample = { x: 900, y: 10, localX: 900, localY: 10, velocity: 0, stationaryMs: 0, idleMs: 0, fullscreen: false, battery: false, visible: true, typing: false };
 describe('action arbitration', () => {
   it('protects dragging from idle, system sleep, and click animations', () => { const m = new PetMachine(); m.request('DRAGGING', 'user', 0); expect(m.request('WAVING', 'idle', 20000)).toBe(false); expect(m.request('SLEEPING', 'system', 20001)).toBe(false); expect(m.request('JUMPING', 'user', 20002)).toBe(false); expect(m.request('IDLE', 'user', 20003)).toBe(true); });
   it('wakes before a queued user action and completes the action', () => { const m = new PetMachine(); m.request('SLEEPING', 'user', 0); m.request('WAVING', 'user', 10); expect(m.state).toBe('WAKING'); m.tick(2811); expect(m.state).toBe('WAVING'); m.tick(5500); expect(m.state).toBe('IDLE'); });
