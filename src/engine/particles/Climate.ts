@@ -1,6 +1,13 @@
 import { Container, Graphics } from 'pixi.js';
 import type { Settings, PetState } from '../../types';
 
+// One resolver keeps atmospheric effects and clothing on the same active-time clock.
+export function weatherMode(time: number, settings: Settings, state: PetState): Exclude<Settings['climate'], 'auto'> {
+  if (settings.quiet || ['SLEEPING', 'WAKING'].includes(state)) return 'off';
+  if (state === 'SUNBATHING') return 'sunny';
+  const scenes = ['sunny', 'rain', 'snow', 'wind'] as const;
+  return settings.climate === 'auto' ? scenes[Math.floor(Math.max(0,time)/75)%scenes.length] : settings.climate;
+}
 // Decorative local scenes, not live weather or location tracking.
 export class Climate extends Container {
   private icon=new Graphics();
@@ -8,8 +15,7 @@ export class Climate extends Container {
   private mode='';
   constructor(){ super(); this.addChild(this.icon); for(let i=0;i<7;i++){const p=new Graphics();this.drops.push(p);this.addChild(p);} }
   update(time:number, settings:Settings, state:PetState, reduced:boolean){
-    const scenes=['sunny','rain','snow','wind'];
-    const mode=state==='SUNBATHING'?'sunny':settings.climate==='auto'?scenes[Math.floor(time/75)%scenes.length]:settings.climate;
+    const mode=weatherMode(time,settings,state);
     this.visible=mode!=='off'&&!['SLEEPING','WAKING'].includes(state)&&!settings.quiet;
     if(!this.visible)return;
     if(mode!==this.mode){

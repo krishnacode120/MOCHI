@@ -1,1 +1,1 @@
-4643ece1e584c319fa192374860db0ffdfbc5be5c3bb115f96b2f2cd9cf9a7ca  Mochi_0.6.1_x64-setup.exe
+75da5a899b0e3a9ccdaacc474f1c42f5987291346fa3fecfd0495f66de2fbf73  Mochi_0.6.2_x64-setup.exe

@@ -1,6 +1,18 @@
 # Verification status — 29 October 2026
 
-## MOCHI 0.6.1 — current delivery
+## MOCHI 0.6.2 — reminder and weather update
+
+- Six focused standalone Rust reminder-clock tests passed, without rebuilding the full Rust test suite. They cover active-time suspension, interval changes, disabled reminders, card spacing, five-minute snoozes, timers continuing behind an open card/preview, and snoozes becoming due independently of another card’s cooldown.
+- Five focused scene tests passed, including shared Auto-weather timing, quiet/sleep suppression, accessory bounds across all five characters, and immediate stowing before acrobatics. The existing Pixi Graphics-child deprecation warning remains non-failing.
+- Reminder cards now use separate water/stretch/eye illustrations, pastel colors, a 45-second closing countdown initialized from native remaining time, and an explicit preview-only close button. A stale initial snapshot can no longer replace a newer reminder event.
+- Timers still measure eligible active time, not wall-clock time. Fullscreen, hidden, quiet, paused, sleeping, and long-inactive periods pause them. Regular cards remain spaced five active minutes apart; a snooze becomes due after five active minutes and waits if another card is still open. Restarting the app resets reminder timers.
+- Clothing follows the same weather resolver as particles: rain umbrella, sunny sunglasses, snow/wind scarf. Olaf responds happily to snow; other characters make occasional small shivers, and Luffy holds his hat in wind. Reduced motion removes flutter/shiver. Sleep and acrobatics stow accessories to prevent clipping.
+- Final TypeScript/Vite build and native release compilation passed. Packaging initially hit a restricted-network NSIS lookup error; the permitted packaging retry succeeded. Per-user installation returned exit code 0 and Settings displayed 0.6.2.
+- The installed 360 × 300 water card displayed the illustration, complete copy and close button without clipping. Its countdown advanced from 33 to 24 seconds; clicking the preview close button dismissed it. Native Mochi visibly carried the rain umbrella, wore the snow scarf, and wore sunny sunglasses. Weather was set to Auto afterward to enable cycling. Existing reminder interval controls showed water 30, stretch 50, and eyes 30 minutes; those values were left unchanged.
+- Installer: `downloads/Mochi_0.6.2_x64-setup.exe` — 1,553,895 bytes. SHA-256: `75da5a899b0e3a9ccdaacc474f1c42f5987291346fa3fecfd0495f66de2fbf73`.
+- No screenshots containing the desktop were saved or uploaded. The five-minute deadline was checked with the clock tests rather than a long live wait. Full native visual coverage of every character/weather combination, multi-monitor/DPI, and long-duration use remain manual.
+
+## MOCHI 0.6.1 — previous delivery
 
 - TypeScript and the production frontend build passed. The expanded 25-test suite passed; an additional targeted ceiling-pose regression caught and verified the fix for clipping during rotation (26 checks total). WALL-E first-frame pupil placement is also covered.
 - New route checks verify both travel directions, full-width and upper-area coverage, small-radius opt-out, treasure inspection stops, and ceiling-patrol endpoints. The inverted-pose regression samples the entire 32-second motion inside the pet canvas.

@@ -6,10 +6,12 @@ use std::{sync::Mutex, time::Instant};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition};
 
 #[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Reminder {
     id: u64,
     kind: usize,
     preview: bool,
+    remaining_ms: u64,
 }
 struct Active {
     notice: Reminder,
@@ -39,7 +41,12 @@ impl Reminders {
             .unwrap_or_else(|e| e.into_inner())
             .active
             .as_ref()
-            .map(|a| a.notice.clone())
+            .map(|a| {
+                let mut notice = a.notice.clone();
+                notice.remaining_ms =
+                    45000_u64.saturating_sub(a.shown.elapsed().as_millis() as u64);
+                notice
+            })
     }
     pub fn tick(&self, app: &AppHandle, settings: &Settings, eligible: bool) -> Result<(), String> {
         let intervals = [
@@ -71,8 +78,8 @@ impl Reminders {
             if close {
                 s.active = None;
             }
-            let available = eligible && s.active.is_none();
-            let due = s.clock.tick(dt, intervals, available);
+            let available = s.active.is_none();
+            let due = s.clock.tick(dt, intervals, eligible, available);
             if let Some(kind) = due {
                 s.sequence += 1;
                 s.active = Some(Active {
@@ -80,6 +87,7 @@ impl Reminders {
                         id: s.sequence,
                         kind,
                         preview: false,
+                        remaining_ms: 45000,
                     },
                     shown: now,
                 });
@@ -107,6 +115,7 @@ impl Reminders {
                     id: s.sequence,
                     kind,
                     preview: true,
+                    remaining_ms: 45000,
                 },
                 shown: Instant::now(),
             });

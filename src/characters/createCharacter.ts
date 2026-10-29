@@ -1,3 +1,4 @@
+import { createWeatherWardrobe } from './weather';
 import { envelope } from '../engine/animation/timing';
 import { drawCharacter } from './artwork';
 import { createSignatureProps, animateSignature } from './signature';
@@ -49,7 +50,8 @@ export function createCharacter(settings: Settings) {
         part.visible = false;
         part.alpha = 0;
     }
-    return { ...r, ...signature, character, eyeSpacing, nose, hat, lenses, desk, notebook, pencil, snacks, plant, caption, words };
+    const wardrobe = createWeatherWardrobe(r, character);
+    return { ...r, ...signature, ...wardrobe, character, eyeSpacing, nose, hat, lenses, desk, notebook, pencil, snacks, plant, caption, words };
 }
 export type CharacterRig = ReturnType<typeof createCharacter>;
 const thoughts = ['Do clouds ever get tired?', 'Growing is quite an adventure.', 'A little kindness goes a long way.'];

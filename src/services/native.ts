@@ -3,7 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { defaults, initialStats, usePetStore, validateSettings } from '../stores/settings';
 import type { Action, CursorSample, HitEllipse, MovementBounds, Persisted, Settings, Stats, WorkArea } from '../types';
 export const native = isTauri();
-export const previewReminder = (kind: number) => native ? invoke<void>('preview_reminder', { kind }) : Promise.resolve(window.open('?view=reminder', 'mochi-reminder-preview', 'width=320,height=220')).then(() => {});
+export const previewReminder = (kind: number) => native ? invoke<void>('preview_reminder', { kind }) : Promise.resolve(window.open(`?view=reminder&kind=${kind}`, 'mochi-reminder-preview', 'width=360,height=300')).then(() => {});
 const previewKey = 'mochi-preview-v1';
 export const cursor: CursorSample = { x: 160, y: 180, localX: 160, localY: 180, velocity: 0, stationaryMs: 0, idleMs: 0, fullscreen: false, battery: false, visible: true, typing: false };
 const actions = new Set<(action: Action) => void>();

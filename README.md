@@ -2,11 +2,11 @@
 
 An original, offline Windows desktop pet built with Tauri 2, Rust, React, TypeScript, PixiJS, and Zustand. Mochi wears a soft hoodie, follows your pointer with curious eyes, takes little tea breaks, and rests when you do. Pip is an optional floating companion.
 
-**Status: Windows release build and NSIS installer produced successfully.** Version 0.6.1 adds Spider-Man and Luffy, revised character artwork, distinct activity profiles, and expanded full-screen travel. Poses and routes share an action clock; speed changes no longer restart gestures. The installed app passed a focused visual check of the characters and cozy props. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
+**Status: Windows release build and NSIS installer produced successfully.** Version 0.6.2 adds illustrated care cards, corrected reminder scheduling, and weather-responsive accessories for all five characters. Poses and routes share an action clock; speed changes no longer restart gestures. The installed app passed a focused visual check of the characters and cozy props. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
 
 ## Install and use
 
-[Download MOCHI 0.6.1 for Windows x64](downloads/Mochi_0.6.1_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
+[Download MOCHI 0.6.2 for Windows x64](downloads/Mochi_0.6.2_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
 
 Double-click **Mochi Start-Stop** on your desktop to start the companion. Double-click the same shortcut again to stop it cleanly and save its settings. Right-click Mochi or its tray icon to open Settings.
 
@@ -24,6 +24,7 @@ Double-click **Mochi Start-Stop** on your desktop to start the companion. Double
 - **Movie time:** popcorn and cola accompany you during fullscreen playback. Start and end Movie time from the action buttons or tray; Mochi does not identify or read movies automatically.
 - **Work with me / Write at desk:** a small wooden desk, laptop or notebook, and hand/pencil movement. No actual typed text is displayed or saved.
 - **Teleport / Tumble down:** fade between screen positions, or fall, bounce, and recover. Routes remain inside the current monitor work area and return home; reduced motion suppresses travel.
+- **Weather reactions:** rain brings an umbrella, sunshine brings sunglasses, and snow/wind bring a cozy scarf. Olaf enjoys snow; Luffy holds his hat in wind. Props ease in and out, stay still with reduced motion, and are stowed for sleep and acrobatics.
 - **Settings → Behavior → Weather scene:** Off, Auto, Sunny, Rain, Snow, or Wind. Auto cycles every 75 active seconds. These are local decorative scenes, without location access or live forecasts. Quiet mode hides weather; reduced motion keeps it still.
 
 ## A companion for your workday
@@ -40,9 +41,11 @@ Double-click **Mochi Start-Stop** on your desktop to start the companion. Double
 
 ## Gentle reminders
 
+- **Cute care cards:** illustrated water, stretch, and eye-break designs with a native-timed 45-second closing countdown. Previews never change your schedule.
+- **Timing:** opening a card no longer pauses other reminder timers. Regular cards stay five active minutes apart; snoozes become due after five active minutes and wait only if another card is open. Acknowledging starts a fresh interval; restarting Mochi starts fresh timers.
 - **Water:** enabled by default, every 45 minutes of active time.
 - **Stretch and eye breaks:** optional, with separate intervals.
-- **Settings → Reminders:** enable/disable each kind, set intervals from 10–240 minutes, and preview a water reminder.
+- **Settings → Reminders:** enable/disable each kind, set intervals from 10–240 minutes, and preview all three card styles.
 - Cards stay near Mochi, disappear after 45 seconds, and offer **In 5 min** or a friendly dismissal. They are silent and do not take keyboard focus.
 - Timers pause during fullscreen, Quiet mode, pet sleep/drag/pause, hiding, and after five minutes without input. They resume without a backlog, with at least five minutes between cards. Reminder countdowns restart when the app restarts; your preferences persist.
 
@@ -98,7 +101,7 @@ npm run build
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-The frontend suite contains 26 focused behavioral, artwork, and boundary checks. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
+The frontend suite contains 28 focused behavioral, artwork, and boundary checks. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
 
 ## Build an installer
 
@@ -107,7 +110,7 @@ npm run tauri build
 Get-ChildItem .\src-tauri\target\release\bundle\nsis\*.exe
 ```
 
-The output is `src-tauri/target/release/bundle/nsis/Mochi_0.6.1_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
+The output is `src-tauri/target/release/bundle/nsis/Mochi_0.6.2_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
 
 ## Project map
 

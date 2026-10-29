@@ -1,3 +1,4 @@
+import { updateWeatherWardrobe } from '../../characters/weather';
 import { poseTargets, smooth } from './timing';
 import { updateCharacter, type CharacterRig } from '../../characters/createCharacter';
 import type { CursorSample, PetState, Settings } from '../../types';
@@ -118,6 +119,7 @@ export class Animator {
         // Decorative strokes only: never display or echo actual keyboard text.
         r.codeLines.children.forEach((line, i) => { line.scale.x = gentle ? 1 : .55 + .45 * ((Math.floor(t * 3) + i * 2) % 5) / 4; });
         updateCharacter(r, this.state, t, this.actionTime, dt, gentle, p.sleep);
+        updateWeatherWardrobe(r, _time, dt, s, this.state);
         r.shadow.scale.x = 1 + p.jump / 160;
         r.shadow.alpha = .12 * (1 - Math.max(this.grip, this.floating, this.hiding));
     }

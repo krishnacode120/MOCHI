@@ -167,11 +167,11 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         }
         if (native && regionClock >= regionAt && !regionBusy) {
           regionAt = regionClock + (s.batterySaver || cursor.battery ? 66 : 33); regionBusy = true;
-          const bounds = [...[rig.desk,rig.notebook,rig.snacks,rig.plant,rig.caption,...rig.signatureProps].filter(p=>p.visible).map(p=>p.getBounds()), ...climate.regions(), ...rig.hitParts.filter(part => part.visible && part.alpha > .01).map(part => part.getBounds()), ...(rig.blanket.visible ? [rig.quilt.getBounds(), rig.pillow.getBounds(), rig.moon.getBounds(), ...rig.nightStars.map(star => star.getBounds())] : []), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), rig.shadow.getBounds()];
+          const bounds = [...[rig.desk,rig.notebook,rig.snacks,rig.plant,rig.caption,...rig.signatureProps,...rig.weatherProps].filter(p=>p.visible).map(p=>p.getBounds()), ...climate.regions(), ...rig.hitParts.filter(part => part.visible && part.alpha > .01).map(part => part.getBounds()), ...(rig.blanket.visible ? [rig.quilt.getBounds(), rig.pillow.getBounds(), rig.moon.getBounds(), ...rig.nightStars.map(star => star.getBounds())] : []), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), rig.shadow.getBounds()];
           // Elliptical visual envelopes also define the real Windows input region.
           const regions: HitEllipse[] = bounds.filter(b => b.width > 0 && b.height > 0).map(b => {
             const x = Math.max(0, b.x - 3), y = Math.max(0, b.y - 3);
-            return { x, y, rectangular: s.character !== 'mochi' || rig.caption.visible || rig.desk.visible, width: Math.min(320, b.x + b.width + 3) - x, height: Math.min(340, b.y + b.height + 3) - y };
+            return { x, y, rectangular: s.character !== 'mochi' || rig.caption.visible || rig.desk.visible || rig.weatherProps.some(p=>p.visible), width: Math.min(320, b.x + b.width + 3) - x, height: Math.min(340, b.y + b.height + 3) - y };
           }).filter(b => b.width > 0 && b.height > 0).slice(0,64);
           void setRegions(regions).catch(reportError).finally(() => { regionBusy = false; });
         }

@@ -61,3 +61,8 @@ Web swinging and Gum-Gum rocket routes visit both side boundaries and the deskto
 Ceiling patrol approaches a wall, climbs up, traverses the upper edge inverted, descends the opposite wall, and returns home. The rig centers before rotating and briefly scales with its actual angle to avoid clipping. Like wall climbing, ceiling patrol seeks the actual monitor sides. WALL-E's treasure patrol visits both floor edges and pauses twice to inspect an object.
 
 The new trips use the existing native work-area clamp, serialized movement, interruption recovery, and reduced-motion/quiet suppression. The Behavior page's Explore the desktop button chooses the selected character's route. No application content is accessed.
+
+
+## Weather wardrobe (0.6.2)
+
+`weatherMode` resolves both particles and clothing from the same elapsed active-time value. `characters/weather.ts` allocates reusable umbrella, sunglasses, scarf, and scarf-tail graphics for each character. Attachments follow the head/rig and are included in native input/visual regions. Weather changes blend opacity; unsafe travel states stow props immediately before the pose rotates or exits the canvas. Reduced motion leaves clothing visible but removes flutter and shivers. This remains offline decorative weather.
