@@ -1,3 +1,4 @@
+import { supportsState } from '../../characters/profiles';
 import { useEffect, useRef } from 'react';
 import { Application, Container } from 'pixi.js';
 // Use Pixi's static shader bindings under Tauri's CSP, which disallows eval.
@@ -55,7 +56,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         const id = ++tripId;
         if (traveling(old) && state !== 'DRAGGING') returning = true;
         if (traveling(state)) {
-          bounds = null; returning = false; routeVariant = Math.random(); wallTrip ||= s.fullScreenRoam || state === 'CLIMBING' || state === 'HIDE_SEEK';
+          bounds = null; returning = false; routeVariant = Math.random(); wallTrip ||= s.fullScreenRoam || state === 'CEILING_CRAWLING' || state === 'CLIMBING' || state === 'HIDE_SEEK';
           void movementBounds().then(value => { if (!disposed && id === tripId) bounds = value; }).catch(e => { reportError(e); if (id === tripId) machine.request('IDLE', 'user', elapsed); });
         }
         if (state === 'DRAGGING') { excursion = { x: 0, y: 0 }; returning = false; wallTrip = false; bounds = null; sent = { x: 0, y: 0 }; }
@@ -69,7 +70,8 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         else if (a === 'resume') machine.resume(elapsed);
         else if (a === 'outfit') { const choices = ['lavender', 'peach', 'sky'] as const; void saveSettings({ outfit: choices[(choices.indexOf(usePetStore.getState().settings.outfit) + 1) % 3] }); }
         else {
-          const state = { pet: machine.state === 'HIDE_SEEK' || Math.random() > .5 ? 'WAVING' : 'JUMPING', tea: 'DRINKING_TEA', play: 'PLAYING', run: 'RUNNING', climb: 'CLIMBING', explore: 'EXPLORING', hideSeek: 'HIDE_SEEK', hop: 'HOPSCOTCH', movie: machine.state === 'MOVIE' ? 'IDLE' : 'MOVIE', write: 'WRITING', teleport: 'TELEPORTING', fall: 'FALLING', hug: 'HUGGING', story: 'STORYTELLING', wonder: 'WONDERING', shuffle: 'REASSEMBLING', summer: 'SUNBATHING', collect: 'COLLECTING', work: 'TYPING', watch: 'WATCHING', stretch: 'STRETCHING', dance: 'DANCING', sleep: 'SLEEPING', wake: 'WAKING' } as const;
+          const state = { ceiling: 'CEILING_CRAWLING', patrol: 'TREASURE_PATROL', rocket: 'GUM_ROCKET', compact: 'COMPACTING', inspect: 'INSPECTING', recharge: 'RECHARGING', web: 'WEB_SHOOTING', swing: 'WEB_SWINGING', sense: 'SPIDER_SENSE', meat: 'EATING_MEAT', punch: 'GUM_PUNCH', hat: 'HAT_TIP', pet: machine.state === 'HIDE_SEEK' || Math.random() > .5 ? 'WAVING' : 'JUMPING', tea: 'DRINKING_TEA', play: 'PLAYING', run: 'RUNNING', climb: 'CLIMBING', explore: 'EXPLORING', hideSeek: 'HIDE_SEEK', hop: 'HOPSCOTCH', movie: machine.state === 'MOVIE' ? 'IDLE' : 'MOVIE', write: 'WRITING', teleport: 'TELEPORTING', fall: 'FALLING', hug: 'HUGGING', story: 'STORYTELLING', wonder: 'WONDERING', shuffle: 'REASSEMBLING', summer: 'SUNBATHING', collect: 'COLLECTING', work: 'TYPING', watch: 'WATCHING', stretch: 'STRETCHING', dance: 'DANCING', sleep: 'SLEEPING', wake: 'WAKING' } as const;
+          if (!supportsState(settings().character, state[a])) return;
           if (a === 'wake' && machine.state !== 'SLEEPING') return;
           if (machine.request(state[a], 'user', elapsed)) {
             playChime(usePetStore.getState().settings);
@@ -81,7 +83,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
       const unsubscribe = onAction(request);
       // The native window starts hidden. Publish its first silhouette before visibility
       // polling can suspend the renderer; later updates follow articulated bounds.
-      if (native) void setRegions([...rig.hitParts.map(p => p.getBounds()), pip.getBounds(), rig.shadow.getBounds()].map(b => ({ x: b.x - 3, y: b.y - 3, width: b.width + 6, height: b.height + 6 }))).catch(reportError);
+      if (native) void setRegions([...rig.hitParts.map(p => p.getBounds()), pip.getBounds(), rig.shadow.getBounds()].filter(b => b.width > 0 && b.height > 0).map(b => ({ x: b.x - 3, y: b.y - 3, width: b.width + 6, height: b.height + 6 }))).catch(reportError);
       let down: { x: number; y: number } | null = null, dragging = false;
       let clickTimer: ReturnType<typeof setTimeout> | undefined;
       const pointerDown = (e: PointerEvent) => {
@@ -118,16 +120,15 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         regionClock += ticker.deltaMS;
         const shouldSuspend = suspendScene(cursor.visible, cursor.fullscreen, s.fullscreenPause, machine.state);
         app.ticker.maxFPS = shouldSuspend || machine.state === 'PAUSED' ? 5 : s.batterySaver || cursor.battery || s.reducedMotion ? 30 : 60;
-        animator.pause(shouldSuspend || machine.state === 'PAUSED');
         if (shouldSuspend) { suspended = true; return; }
         const dt = suspended ? 0 : Math.min(ticker.deltaMS / 1000, .1); suspended = false;
         if (machine.state !== 'PAUSED') elapsed += dt * 1000;
         if (lastSettings !== s) {
-          if (lastSettings.speed !== s.speed || lastSettings.reducedMotion !== s.reducedMotion) animator.transition(machine.state, s.reducedMotion, s.speed);
+          // Pose and route now share the same action clock; speed changes never restart either.
           if ((s.quiet || s.reducedMotion || !s.adventures || lastSettings.fullScreenRoam !== s.fullScreenRoam) && traveling(machine.state)) machine.request('IDLE', 'user', elapsed);
           lastSettings = s;
         }
-        if (s.outfit !== outfit || s.character !== character) { outfit = s.outfit; character = s.character; scene.removeChild(rig.root); rig.root.destroy({ children: true }); rig = createCharacter(s); scene.addChildAt(rig.root, 1); }
+        if (s.outfit !== outfit || s.character !== character) { if (s.character !== character) machine.resetCharacter(elapsed); outfit = s.outfit; character = s.character; scene.removeChild(rig.root); rig.root.destroy({ children: true }); rig = createCharacter(s); scene.addChildAt(rig.root, 1); }
         scene.alpha = s.opacity;
         pip.visible = s.pip;
         const effects = s.particles > 0 && !s.reducedMotion && !s.batterySaver && !cursor.battery && !s.quiet;
@@ -137,12 +138,12 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
           if (preview) cursor.typing = s.workAlong && performance.now() - previewTypedAt < 1200;
           if (elapsed > behaviorAt) { behaviorAt = elapsed + 250; behavior.update(elapsed, machine, s, cursor); }
           const previousX = excursion.x;
-          let grip = 0, side = 1, hide = 0, float = 0, hop = 0, vanish = 0;
+          let ceiling = 0, grip = 0, side = 1, hide = 0, float = 0, hop = 0, vanish = 0;
           if (!dragging && (returning || (traveling(machine.state) && bounds && !s.quiet && !s.reducedMotion))) {
-            const target = returning ? { x: 0, y: 0, grip: 0, side: 1, hide: 0, float: 0, hop: 0, vanish: 0, warp: false } : adventure(machine.state, machine.actionSeconds, bounds!, s.playRadius, s.fullScreenRoam, routeVariant);
+            const target = returning ? { x: 0, y: 0, ceiling: 0, grip: 0, side: 1, hide: 0, float: 0, hop: 0, vanish: 0, warp: false } : adventure(machine.state, machine.actionSeconds, bounds!, s.playRadius, s.fullScreenRoam, routeVariant);
             const ease = target.warp ? 1 : Math.min(1 - Math.exp(-dt * (returning ? 4 : 12)), returning ? 320 * dt / Math.max(1, Math.hypot(target.x - excursion.x, target.y - excursion.y)) : 1);
             excursion.x += (target.x - excursion.x) * ease; excursion.y += (target.y - excursion.y) * ease;
-            grip = target.grip; side = target.side; hide = target.hide; float = target.float; hop = target.hop; vanish = target.vanish;
+            ceiling = target.ceiling; grip = target.grip; side = target.side; hide = target.hide; float = target.float; hop = target.hop; vanish = target.vanish;
             const done = returning && Math.hypot(excursion.x, excursion.y) < .5;
             if (done) excursion = { x: 0, y: 0 };
             if (elapsed >= moveAt && !motionBusy && (done || Math.hypot(excursion.x - sent.x, excursion.y - sent.y) > .2)) {
@@ -154,7 +155,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
           }
           scene.alpha = s.opacity * (1 - (machine.state === 'TELEPORTING' && motionBusy ? 1 : vanish));
           climate.update(elapsed / 1000, s, machine.state, s.reducedMotion || s.batterySaver || cursor.battery);
-          animator.motion = { speed: dt ? (excursion.x - previousX) / dt : 0, grip, side, hide, float, hop };
+          animator.motion = { ceiling, speed: dt ? (excursion.x - previousX) / dt : 0, grip, side, hide, float, hop };
           animator.actionTime = machine.actionSeconds;
           animator.update(rig, elapsed / 1000, dt, cursor, s);
           if (s.reducedMotion) { pip.position.set(machine.state === 'SLEEPING' ? 220 : 243, machine.state === 'SLEEPING' ? 299 : 115); pip.rotation = 0; }
@@ -166,17 +167,17 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         }
         if (native && regionClock >= regionAt && !regionBusy) {
           regionAt = regionClock + (s.batterySaver || cursor.battery ? 66 : 33); regionBusy = true;
-          const bounds = [...[rig.desk,rig.notebook,rig.snacks,rig.plant,rig.caption].filter(p=>p.visible).map(p=>p.getBounds()), ...climate.regions(), ...rig.hitParts.filter(part => part.visible && part.alpha > .01).map(part => part.getBounds()), ...(rig.blanket.visible ? [rig.quilt.getBounds(), rig.pillow.getBounds(), rig.moon.getBounds(), ...rig.nightStars.map(star => star.getBounds())] : []), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), rig.shadow.getBounds()];
+          const bounds = [...[rig.desk,rig.notebook,rig.snacks,rig.plant,rig.caption,...rig.signatureProps].filter(p=>p.visible).map(p=>p.getBounds()), ...climate.regions(), ...rig.hitParts.filter(part => part.visible && part.alpha > .01).map(part => part.getBounds()), ...(rig.blanket.visible ? [rig.quilt.getBounds(), rig.pillow.getBounds(), rig.moon.getBounds(), ...rig.nightStars.map(star => star.getBounds())] : []), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), rig.shadow.getBounds()];
           // Elliptical visual envelopes also define the real Windows input region.
-          const regions: HitEllipse[] = bounds.map(b => {
+          const regions: HitEllipse[] = bounds.filter(b => b.width > 0 && b.height > 0).map(b => {
             const x = Math.max(0, b.x - 3), y = Math.max(0, b.y - 3);
-            return { x, y, rectangular: s.character === 'walle' || rig.caption.visible || rig.desk.visible, width: Math.min(320, b.x + b.width + 3) - x, height: Math.min(340, b.y + b.height + 3) - y };
+            return { x, y, rectangular: s.character !== 'mochi' || rig.caption.visible || rig.desk.visible, width: Math.min(320, b.x + b.width + 3) - x, height: Math.min(340, b.y + b.height + 3) - y };
           }).filter(b => b.width > 0 && b.height > 0).slice(0,64);
           void setRegions(regions).catch(reportError).finally(() => { regionBusy = false; });
         }
         if (import.meta.env.DEV && host.current) host.current.dataset.fps = String(Math.round(ticker.FPS));
       });
-      cleanup = () => { unsubscribe(); clearTimeout(clickTimer); clearInterval(statsTimer); window.removeEventListener('keydown', previewKey); window.removeEventListener('mochi-drag-ended', cancel); window.removeEventListener('mochi-position-reset', resetExcursion); cancel(); animator.destroy(); app.destroy(true, { children: true }); };
+      cleanup = () => { unsubscribe(); clearTimeout(clickTimer); clearInterval(statsTimer); window.removeEventListener('keydown', previewKey); window.removeEventListener('mochi-drag-ended', cancel); window.removeEventListener('mochi-position-reset', resetExcursion); cancel(); app.destroy(true, { children: true }); };
     };
     initialize().catch(reportError);
     return () => { disposed = true; cleanup(); };

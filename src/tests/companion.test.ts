@@ -7,6 +7,26 @@ import type { CursorSample, PetState } from '../types';
 
 const cursor: CursorSample = { x: 0, y: 0, localX: 800, localY: 0, velocity: 0, stationaryMs: 0, idleMs: 0, fullscreen: false, battery: false, visible: true, typing: true };
 describe('companion behavior boundaries', () => {
+  it('takes swings, rocket jumps, and playtime across the available screen width', () => {
+    const bounds = { left: -1400, right: 280, top: -700, bottom: 60 };
+    for (const state of ['WEB_SWINGING', 'GUM_ROCKET', 'PLAYING'] as PetState[]) {
+      for (const variant of [0, 1]) {
+        const points = Array.from({ length: 721 }, (_, i) => adventure(state, i / 720 * tripSeconds[state]!, bounds, 150, true, variant));
+        expect(Math.min(...points.map(p => p.x))).toBeCloseTo(bounds.left, 0);
+        expect(Math.max(...points.map(p => p.x))).toBeCloseTo(bounds.right, 0);
+        if (state !== 'PLAYING') expect(Math.min(...points.map(p => p.y))).toBeCloseTo(bounds.top, 0);
+        const local = Array.from({ length: 73 }, (_, i) => adventure(state, i / 72 * tripSeconds[state]!, bounds, 150, false, variant));
+        expect(local.every(p => Math.abs(p.x) <= 150 && Math.abs(p.y) <= 150)).toBe(true);
+      }
+    }
+  });
+  it('crosses the top during ceiling patrol and stops to inspect treasures', () => {
+    const b = { left: -900, right: 100, top: -500, bottom: 70 };
+    expect(adventure('CEILING_CRAWLING', 11, b, 180, true)).toMatchObject({ x: b.right, y: b.top, ceiling: 1 });
+    expect(adventure('CEILING_CRAWLING', 21, b, 180, true)).toMatchObject({ x: b.left, y: b.top, ceiling: 1 });
+    expect(adventure('TREASURE_PATROL', 7, b, 180, true)).toMatchObject({ x: b.left, y: b.bottom });
+    expect(adventure('TREASURE_PATROL', 9, b, 180, true)).toMatchObject({ x: b.left, y: b.bottom });
+  });
   it('keeps every route inside available space and returns exactly home', () => {
     for (const bounds of [{ left: -1200, right: 12, top: -350, bottom: 0 }, { left: 0, right: 900, top: -25, bottom: 300 }]) {
       for (const [state, end] of Object.entries(tripSeconds) as [PetState, number][]) {

@@ -1,12 +1,12 @@
 # Animation system
 
-`characters/mochi/artwork.ts` constructs original vector layers: hoodie body, head, eyes/pupils/lids, mouth, hair, arms, legs, teacup, and shadow. The same design is supplied as `public/mochi.svg` for the native settings portrait; the desktop character itself is rendered and articulated by PixiJS. `scripts/generate-icons.ps1` generates original tray/application icons without external artwork.
+`characters/mochi/artwork.ts` constructs original vector layers: hoodie body, head, eyes/pupils/lids, mouth, hair, arms, legs, teacup, and shadow. Settings renders a static frame of the same PixiJS character rig used by the desktop pet; the legacy SVG previews remain in public/. `scripts/generate-icons.ps1` generates original tray/application icons without external artwork.
 
 `PetMachine` has IDLE, CURIOUS, WALKING, RUNNING, CLIMBING, EXPLORING, HIDE_SEEK, HOPSCOTCH, TYPING, WATCHING, STRETCHING, SITTING, PLAYING, SLEEPING, WAKING, WAVING, JUMPING, DANCING, DRINKING_TEA, DRAGGING, and PAUSED. Requests have idle/system/user sources. Idle requests only interrupt safe resting states and use per-action cooldowns. User animations resist idle sleep requests. Drag blocks all transitions except release and pause. Pausing remembers sleep or idle as a safe return state. A bounded one-slot queue lets an action requested while asleep finish waking first; the newest user request during waking replaces the pending action. Dragging/pause clear that queue.
 
-The animation clock does not advance while paused, hidden, or paused for a fullscreen app. GSAP transitions use the configured speed. `Animator` kills an interrupted timeline and blends from the current pose; sleep/wake interpolates from the current sleep pose. Rendering interpolates gaze toward global cursor samples and limits pupil movement/tilt. Walking alternates limbs; sitting lowers the body and swings feet; a jump has anticipation, ascent, landing squash, and recovery. Tea lifts a separate cup and fades steam. Pip floats, settles next to a sleeping or working Mochi, and follows an orbit during play. All follow interpolation uses delta time. Typing reveals a vector laptop and alternating hand taps with decorative screen strokes. Watching tilts the head; stretching reaches both arms upward.
+The animation clock does not advance while paused, hidden, or paused for a fullscreen app. `Animator` samples pose targets from state-machine action age at the configured speed and blends from the current pose. Sleep/wake interpolates from the current sleep pose. Rendering interpolates gaze toward global cursor samples and limits pupil movement/tilt. Walking alternates limbs; sitting lowers the body and swings feet; a jump has anticipation, ascent, landing squash, and recovery. Tea lifts a separate cup and fades steam. Pip floats, settles next to a sleeping or working Mochi, and follows an orbit during play. All follow interpolation uses delta time. Typing reveals a vector laptop and alternating hand taps with decorative screen strokes. Watching tilts the head; stretching reaches both arms upward.
 
-The behavior scheduler uses injected randomness in tests, a 22–48 second spontaneous interval, no immediate repeated idle actions, and configurable 30/120/300 second calm/sit/sleep defaults. Manual sleep remains asleep until an explicit user wake or interaction. Windows system inactivity drives automatic sleep; browser preview uses only synthetic local pointer activity and is labeled accordingly.
+The behavior scheduler uses injected randomness in tests, a 22–48 second spontaneous interval, no repeats among the previous three spontaneous choices, and configurable 30/120/300 second calm/sit/sleep defaults. Manual sleep remains asleep until an explicit user wake or interaction. Windows system inactivity drives automatic sleep; browser preview uses only synthetic local pointer activity and is labeled accordingly.
 
 Statistics change gently after successful interactions. Sleep restores one energy point per ten active animation-clock seconds; there is no decay, death, debt, notification pressure, or offline-time penalty. Stats save every 30 seconds, so abrupt process termination may lose the most recent interactions.
 
@@ -16,7 +16,7 @@ Future bitmap assets can use `loadCharacterAsset` in `characters/assets.ts`. It 
 
 ## Companion routes and activity
 
-`physics/adventures.ts` produces eased absolute offsets from home. Walking and Pip play stay near home. Running and hopscotch can use the full screen width. EXPLORING visits the monitor corners with an original balloon rig; full-screen roaming can be disabled. Climbing approaches the nearest monitor edge, shifts the rig toward the wall, climbs within available height, descends, and returns. Native bounds are logical offsets converted from the monitor work area using pet size and DPI; native movement clamps again before setting the window position. Interrupted trips ease home; dragging establishes a new home. Bounds requests are generation-guarded against stale responses.
+`physics/adventures.ts` produces eased absolute offsets from home. Walking stays near home; Pip play can use the full available width. Running and hopscotch can use the full screen width. EXPLORING visits the monitor corners with an original balloon rig; full-screen roaming can be disabled. Climbing approaches the nearest monitor edge, shifts the rig toward the wall, climbs within available height, descends, and returns. Native bounds are logical offsets converted from the monitor work area using pet size and DPI; native movement clamps again before setting the window position. Interrupted trips ease home; dragging establishes a new home. Bounds requests are generation-guarded against stale responses.
 
 Action age accumulates delta time at the current speed instead of multiplying total elapsed time, preventing rewinds when speed changes. Body, limbs, gaze, facing, and Pip use exponential smoothing. Native movement has one request in flight, capped at 60 Hz (30 on battery).
 
@@ -25,7 +25,7 @@ The Windows adapter receives keyboard-event notifications on a dedicated message
 ## Animation research applied (28 October 2026)
 
 - [University of Washington: animation principles](https://courses.cs.washington.edu/courses/cse458/25au/content/exercises/animation_principles.html): anticipation, arcs, and overlapping action informed the small pre-movement squash, curved balloon routes, staggered hair response, and balloon sway. Artwork remains original; no third-party sprites were copied.
-- [GSAP easing documentation](https://gsap.com/docs/v3/Eases/): slow-in/slow-out timing informed the eased starts, stops, and pose transitions. Routes are pure smoothstep functions, while articulated pose transitions use GSAP.
+- [GSAP easing documentation](https://gsap.com/docs/v3/Eases/): slow-in/slow-out timing informed the eased starts, stops, and pose transitions. Routes are pure smoothstep functions, while 0.6 articulated poses use action-age curves and exponential blending.
 - [Microsoft LowLevelKeyboardProc](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc): replaced key-state polling with an activity-only callback on a dedicated message-loop thread. It performs one atomic store and always calls the next hook. No key-event payload is dereferenced. This follows the documented requirement to keep the callback short and run it on a thread with a message loop.
 
 Hide-and-seek has approach, hide, two peeks, reveal, and return phases. The canvas clips artwork at the screen edge; native hit regions are intersected with the canvas before submission. Pip or a visible portion of Mochi remains nearby, and the tray retains reset/exit controls. Clicking Mochi interrupts hiding with a wave and eases the trip home. Quiet/reduced-motion modes suppress travel and peeking. Returning from an interrupted full-screen trip is speed-limited to avoid jumping across the desktop.
@@ -43,3 +43,21 @@ MOVIE is an explicit persistent action, toggleable from controls. It bypasses fu
 TELEPORTING uses discrete in-bounds destinations with brief fade-outs; the scene stays invisible while the native position update is in flight. FALLING uses acceleration, a rebound, and an eased recovery. Both honor reduced-motion and quiet travel suppression.
 
 `Climate.ts` provides pooled, decorative sun/rain/snow/wind scenes. Automatic cycling uses active renderer time, never location or forecast data. Sleep hides climate effects in favor of the moon/stars, and quiet mode hides them.
+
+## Character motion revision (0.6)
+
+`characters/artwork.ts` owns each character silhouette and articulated attachments. `signature.ts` builds and animates signature props. `profiles.ts` owns names, descriptions, signature actions, and the weighted spontaneous-action pool. The Settings portrait renders the actual rig once, without starting a second behavior loop or native window movement.
+
+`animation/timing.ts` samples gesture curves from the state machine action age. Animator no longer creates an independent GSAP timeline: speed changes, suspension, and action completion stay synchronized. Cubes, webs, meat, solar panels, mask effects, and extended fists are included in native window regions. Non-Mochi artwork uses rectangular envelopes to preserve angular silhouettes.
+
+WALL-E retains rigid treads and chassis, with gaze inside each independently tilting binocular housing. Spider-Man has no exposed pupils or mouth. Luffy stretches one arm through anticipation, extension, hold, and recovery. Signature poses use entrance/exit envelopes and reset inherited transforms. Shared blanket, desk, movie, and weather scenes remain available.
+
+Random scheduling avoids the last three selected activities, resets its history when the character changes, and excludes other characters' signature actions. Switching characters clears pending actions, preserving a paused state when necessary. Browser routes and native routes remain bounded to the current monitor work area.
+
+## Full-area adventures (0.6.1)
+
+Web swinging and Gum-Gum rocket routes visit both side boundaries and the desktop floor, with arcs reaching the upper work-area boundary. Pip play uses the full width when full-screen roaming is enabled; its duration increased to 18 seconds. Small-adventure mode constrains swing, rocket, and play routes to the configured radius.
+
+Ceiling patrol approaches a wall, climbs up, traverses the upper edge inverted, descends the opposite wall, and returns home. The rig centers before rotating and briefly scales with its actual angle to avoid clipping. Like wall climbing, ceiling patrol seeks the actual monitor sides. WALL-E's treasure patrol visits both floor edges and pauses twice to inspect an object.
+
+The new trips use the existing native work-area clamp, serialized movement, interruption recovery, and reduced-motion/quiet suppression. The Behavior page's Explore the desktop button chooses the selected character's route. No application content is accessed.

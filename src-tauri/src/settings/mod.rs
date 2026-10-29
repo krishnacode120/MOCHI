@@ -99,7 +99,7 @@ fn bounded(value: &mut f64, min: f64, max: f64, fallback: f64) {
 }
 impl Settings {
     pub fn validate(&mut self) {
-        if !["mochi", "walle", "olaf"].contains(&self.character.as_str()) {
+        if !["mochi", "walle", "olaf", "spiderman", "luffy"].contains(&self.character.as_str()) {
             self.character = "mochi".into();
         }
         if !["off", "auto", "sunny", "rain", "snow", "wind"].contains(&self.climate.as_str()) {

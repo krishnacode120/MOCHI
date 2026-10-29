@@ -1,6 +1,6 @@
-# MOCHI 0.5.0
+# MOCHI 0.6.1
 
-[Download the Windows x64 installer](Mochi_0.5.0_x64-setup.exe) (1.50 MiB).
+[Download the Windows x64 installer](Mochi_0.6.1_x64-setup.exe) (1.48 MiB).
 
 Run the installer, then use **Mochi Start-Stop** on the desktop to start or cleanly stop the companion. WebView2 must already be installed. No administrator account is required for MOCHI's per-user installation. The installer is unsigned.
 

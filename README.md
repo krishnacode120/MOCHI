@@ -1,20 +1,25 @@
 # MOCHI — Your Cozy Desktop Companion
 
-An original, offline Windows desktop pet built with Tauri 2, Rust, React, TypeScript, PixiJS, GSAP, and Zustand. Mochi wears a soft hoodie, follows your pointer with curious eyes, takes little tea breaks, and rests when you do. Pip is an optional floating companion.
+An original, offline Windows desktop pet built with Tauri 2, Rust, React, TypeScript, PixiJS, and Zustand. Mochi wears a soft hoodie, follows your pointer with curious eyes, takes little tea breaks, and rests when you do. Pip is an optional floating companion.
 
-**Status: Windows release build and NSIS installer produced successfully.** Version 0.5.0 adds selectable WALL-E and Olaf, blanket naps, movie snacks, a writing desk, teleporting, playful falls, and decorative weather. The installed app passed a focused visual check of the characters and cozy props. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
+**Status: Windows release build and NSIS installer produced successfully.** Version 0.6.1 adds Spider-Man and Luffy, revised character artwork, distinct activity profiles, and expanded full-screen travel. Poses and routes share an action clock; speed changes no longer restart gestures. The installed app passed a focused visual check of the characters and cozy props. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
 
 ## Install and use
 
-[Download MOCHI 0.5.0 for Windows x64](downloads/Mochi_0.5.0_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
+[Download MOCHI 0.6.1 for Windows x64](downloads/Mochi_0.6.1_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
 
 Double-click **Mochi Start-Stop** on your desktop to start the companion. Double-click the same shortcut again to stop it cleanly and save its settings. Right-click Mochi or its tray icon to open Settings.
 
 ## Characters and cozy scenes
 
-- **Settings → Character → Your desktop friend:** choose Mochi, WALL-E, or Olaf. The two new characters are hand-drawn, procedural fan interpretations with distinct silhouettes and animations.
+- **Settings → Character → Your desktop friend:** choose Mochi, WALL-E, Olaf, Spider-Man, or Luffy. Settings portraits render the same stylized fan artwork as the desktop pet.
 - **Olaf:** warm hugs, expressive storytelling, curious thoughts, detachable snowball/head/nose antics, a playful waddle, and dreams of summer. These are scripted character behaviors, not real emotional or screen-content analysis.
-- **WALL-E:** tread feet, binocular eyes, articulated arms, and a little plant-collecting moment.
+- **WALL-E:** weathered chassis, binocular eyes and rigid treads; plant protection, compacting cubes, treasure inspection, solar recharge, and a floor patrol with inspection stops.
+- **Spider-Man:** red/blue suit, white mask lenses, web pattern and chest emblem; wall crawling, wrist webs, full-width swinging, spider-sense, and an inverted ceiling patrol.
+- **Luffy:** straw hat, black hair, under-eye scar, red vest and sandals; meat eating, elastic Gum-Gum punches, a hat-tip greeting, and full-screen rocket jumps.
+- **Full-screen trips:** web swings and rocket jumps visit both sides and the upper work area. Pip play uses the full width. All trips return home. Settings > Behavior > Explore the desktop starts your character's tour.
+- **Varied behavior:** signature activities are weighted by character and avoid the last three choices. Switching characters clears incompatible queued actions. Quiet mode and reduced motion remain supported.
+- See [character references](docs/character-references.md) for the reference sources and implementation scope.
 - **Blanket naps:** automatic inactivity sleep curls the character onto a pillow beneath a quilt, with a moon and twinkling stars. Sleep thresholds remain in Behavior settings.
 - **Movie time:** popcorn and cola accompany you during fullscreen playback. Start and end Movie time from the action buttons or tray; Mochi does not identify or read movies automatically.
 - **Work with me / Write at desk:** a small wooden desk, laptop or notebook, and hand/pencil movement. No actual typed text is displayed or saved.
@@ -93,7 +98,7 @@ npm run build
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-The frontend suite contains eighteen behavioral and boundary tests, rather than UI snapshot or redundant implementation tests. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
+The frontend suite contains 26 focused behavioral, artwork, and boundary checks. Rust tests cover settings, serialization, velocity, and monitor boundaries. Run the Windows manual checklist only when native changes need verification.
 
 ## Build an installer
 
@@ -102,7 +107,7 @@ npm run tauri build
 Get-ChildItem .\src-tauri\target\release\bundle\nsis\*.exe
 ```
 
-The output is `src-tauri/target/release/bundle/nsis/Mochi_0.5.0_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
+The output is `src-tauri/target/release/bundle/nsis/Mochi_0.6.1_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
 
 ## Project map
 

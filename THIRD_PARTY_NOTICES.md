@@ -23,4 +23,4 @@ The packaged frontend preserves dependency legal comments through Vite's bundlin
 
 ## Character references
 
-WALL-E and Olaf are Disney/Pixar characters. This project includes unofficial, stylized fan interpretations drawn procedurally in code, alongside the original Mochi and Pip designs. No official sprites, film frames, music, or voice tracks are bundled. Character names and source designs are not original MOCHI creations.
+WALL-E and Olaf are Disney/Pixar characters; Spider-Man belongs to Marvel, and Monkey D. Luffy is a character by Eiichiro Oda, associated with Shueisha and Toei Animation. This project includes unofficial, stylized fan interpretations drawn procedurally in code, alongside the original Mochi and Pip designs. No official sprites, film frames, music, or voice tracks are bundled. Character names and source designs are not original MOCHI creations.

@@ -2,7 +2,7 @@ import type { PetState } from '../../types';
 import { tripSeconds } from '../physics/adventures';
 export type Source = 'idle' | 'system' | 'user';
 const resting = new Set<PetState>(['IDLE', 'CURIOUS', 'SITTING']);
-export const durations: Partial<Record<PetState, number>> = { WRITING: 18000, HUGGING: 5000, STORYTELLING: 9000, WONDERING: 7000, REASSEMBLING: 6500, SUNBATHING: 8000, COLLECTING: 8500, WAVING: 2600, JUMPING: 1500, DANCING: 5400, DRINKING_TEA: 6500, WAKING: 2800, TYPING: 12000, WATCHING: 7000, STRETCHING: 5000, SITTING: 12000 };
+export const durations: Partial<Record<PetState, number>> = { COMPACTING: 8000, INSPECTING: 7000, RECHARGING: 10000, WEB_SHOOTING: 5000, SPIDER_SENSE: 4500, EATING_MEAT: 9000, GUM_PUNCH: 6000, HAT_TIP: 5000, WRITING: 18000, HUGGING: 5000, STORYTELLING: 9000, WONDERING: 7000, REASSEMBLING: 6500, SUNBATHING: 8000, COLLECTING: 8500, WAVING: 2600, JUMPING: 1500, DANCING: 5400, DRINKING_TEA: 6500, WAKING: 2800, TYPING: 12000, WATCHING: 7000, STRETCHING: 5000, SITTING: 12000 };
 export class PetMachine {
   state: PetState = 'IDLE';
   since = 0;
@@ -38,6 +38,10 @@ export class PetMachine {
   private enter(next: PetState, source: Source, now: number) {
     const old = this.state; this.state = next; this.since = now; this.source = source; this.age = 0; this.tickAt = now;
     this.last.set(next, now); this.changed(next, old);
+  }
+  resetCharacter(now: number) {
+    this.pending = null; this.manualSleep = false; this.previous = 'IDLE';
+    this.enter(this.state === 'PAUSED' ? 'PAUSED' : 'IDLE', 'system', now);
   }
   resume(now: number) { if (this.state === 'PAUSED') this.enter(this.previous, 'system', now); }
   tick(now: number, speed = 1) {

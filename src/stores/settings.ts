@@ -24,7 +24,7 @@ export function validateSettings(input: Partial<Settings>): Settings {
   s.sitAfter = Math.max(s.calmAfter, s.sitAfter); s.sleepAfter = Math.max(s.sitAfter, s.sleepAfter);
   if (!['lavender', 'peach', 'sky'].includes(s.outfit)) s.outfit = defaults.outfit;
   if (!['cream', 'dusk'].includes(s.theme)) s.theme = defaults.theme;
-  if (!['mochi', 'walle', 'olaf'].includes(s.character)) s.character = defaults.character;
+  if (!['mochi', 'walle', 'olaf', 'spiderman', 'luffy'].includes(s.character)) s.character = defaults.character;
   if (!['off', 'auto', 'sunny', 'rain', 'snow', 'wind'].includes(s.climate)) s.climate = defaults.climate;
   s.monitor = Math.round(s.monitor); s.particles = Math.round(s.particles);
   for (const key of ['waterInterval', 'stretchInterval', 'eyeInterval'] as const) s[key] = Math.round(Math.min(240, Math.max(10, s[key])));

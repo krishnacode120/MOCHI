@@ -107,10 +107,11 @@ pub fn dispatch(app: &AppHandle, command: &str) -> Result<(), String> {
             }
             crate::apply_settings(app, s)
         }
-        "movie" | "write" | "teleport" | "fall" | "hug" | "story" | "wonder" | "shuffle"
-        | "summer" | "collect" | "pet" | "tea" | "play" | "run" | "climb" | "explore"
-        | "hideSeek" | "hop" | "work" | "watch" | "stretch" | "dance" | "sleep" | "wake"
-        | "pause" | "resume" | "outfit" => app
+        "ceiling" | "patrol" | "rocket" | "compact" | "inspect" | "recharge" | "web" | "swing"
+        | "sense" | "meat" | "punch" | "hat" | "movie" | "write" | "teleport" | "fall" | "hug"
+        | "story" | "wonder" | "shuffle" | "summer" | "collect" | "pet" | "tea" | "play"
+        | "run" | "climb" | "explore" | "hideSeek" | "hop" | "work" | "watch" | "stretch"
+        | "dance" | "sleep" | "wake" | "pause" | "resume" | "outfit" => app
             .emit_to("pet", "action", command)
             .map_err(|e| e.to_string()),
         _ => Err("Unknown tray command".into()),

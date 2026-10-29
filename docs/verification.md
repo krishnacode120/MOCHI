@@ -1,6 +1,19 @@
-# Verification status — 28 October 2026
+# Verification status — 29 October 2026
 
-## MOCHI 0.5.0 — current delivery
+## MOCHI 0.6.1 — current delivery
+
+- TypeScript and the production frontend build passed. The expanded 25-test suite passed; an additional targeted ceiling-pose regression caught and verified the fix for clipping during rotation (26 checks total). WALL-E first-frame pupil placement is also covered.
+- New route checks verify both travel directions, full-width and upper-area coverage, small-radius opt-out, treasure inspection stops, and ceiling-patrol endpoints. The inverted-pose regression samples the entire 32-second motion inside the pet canvas.
+- Coverage includes character-specific random pools, avoiding three recent activities, queued-action reset on character switching, shared action-age pose timing, punch recovery, and screen-route bounds including web swinging. A pre-existing Pixi warning about Graphics children appears in the artwork test; it does not fail the check.
+- Final 0.6.1 TypeScript/Vite build, native release compilation, and NSIS packaging passed. The per-user upgrade returned exit code 0; installed Settings reported version 0.6.1 and retained size 0.65 and speed 1.5.
+- The installed ceiling patrol moved from (1455, 467) to the left screen edge and reached the top work-area edge. A timed middle-of-route capture at (1345, 1) visibly confirmed the inverted Spider-Man pose without clipped body parts. Native captures were 208 × 221 pixels at the retained size. This verifies actual window travel as well as the route calculations.
+- Installed visuals confirmed Spider-Man's costume and wrist-fired web, Luffy's straw-hat design, meat eating and extended punch, and WALL-E's revised body/treads and solar panels. Settings now uses the same artwork as the pet. The visual check found WALL-E pupils initially offset in the static portrait; that was corrected and covered by the targeted test.
+- Empty artwork bounds are excluded before native region padding, avoiding invisible input regions from unused parts. Character props remain included in the bounded native mask.
+- Mochi was restored as the selected character. The desktop Start-Stop shortcut still targets `C:\Users\krishna\Applications\Mochi\mochi-desktop.exe` with `--toggle`.
+- Final installer: `downloads/Mochi_0.6.1_x64-setup.exe` — 1,551,526 bytes. SHA-256: `4643ece1e584c319fa192374860db0ffdfbc5be5c3bb115f96b2f2cd9cf9a7ca`.
+- No screenshots containing the user's background windows were saved or uploaded. No broad UI suite, separate Rust test rebuild, or soak test was added. All signature actions are implemented, but only the native poses listed above were visually checked. Multi-monitor/DPI, actual fullscreen playback, and real-keyboard observation remain manual.
+
+## MOCHI 0.5.0 — previous delivery
 
 - TypeScript and the production frontend build passed. All 18 focused tests passed, including movie-mode persistence/fullscreen suspension, settings migration, teleport fade timing, and existing route bounds coverage extended to teleporting/falling.
 - Native release compilation produced the NSIS installer. The per-user upgrade returned exit code 0; size (0.65), speed (1.5), and existing preferences were retained.
