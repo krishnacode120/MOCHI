@@ -1,5 +1,12 @@
 # Verification status — 29 October 2026
 
+## MOCHI 0.6.3 — compact and custom reminders
+
+- Reduced native and browser-preview cards from 360 × 300 to 280 × 190 (about half the screen area). Smaller illustrations, shorter copy, tighter spacing, and compact buttons retain the cute styling, snooze, and countdown.
+- Added up to 10 locally saved custom reminders with title, message, interval, style, preview, editing, pause/enable, and removal. Stable scheduler slots keep a deleted or reordered reminder from transferring its timer to another reminder. The shared scheduler retains active-time eligibility, overdue ordering, spacing, and snooze behavior.
+- No tests or UI checks were run, as requested. Production TypeScript/Vite compilation, native release compilation, and NSIS packaging completed successfully. Per-user installation returned exit code 0, and Mochi was restarted.
+- Installer: `downloads/Mochi_0.6.3_x64-setup.exe` — 1,562,017 bytes. SHA-256: `5fc9af17f21ad2a60fa96207e45b72bac75a32080ad84c567dbae336fb757206`.
+
 ## MOCHI 0.6.2 — reminder and weather update
 
 - Six focused standalone Rust reminder-clock tests passed, without rebuilding the full Rust test suite. They cover active-time suspension, interval changes, disabled reminders, card spacing, five-minute snoozes, timers continuing behind an open card/preview, and snoozes becoming due independently of another card’s cooldown.

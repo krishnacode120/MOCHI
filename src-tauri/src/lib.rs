@@ -75,11 +75,17 @@ fn current_reminder(app: AppHandle) -> Option<reminders::Reminder> {
     app.state::<reminders::Reminders>().current()
 }
 #[tauri::command]
-fn preview_reminder(app: AppHandle, window: WebviewWindow, kind: usize) -> Result<(), String> {
+fn preview_reminder(
+    app: AppHandle,
+    window: WebviewWindow,
+    kind: usize,
+    custom_id: Option<String>,
+) -> Result<(), String> {
     if window.label() != "settings" {
         return Err("Open reminder previews from Settings".into());
     }
-    app.state::<reminders::Reminders>().preview(&app, kind)
+    app.state::<reminders::Reminders>()
+        .preview(&app, kind, custom_id)
 }
 #[tauri::command]
 fn respond_reminder(

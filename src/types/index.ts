@@ -1,3 +1,4 @@
+export interface CustomReminder { id: string; title: string; message: string; interval: number; enabled: boolean; style: 'water' | 'stretch' | 'eyes' }
 export type PetState = 'CEILING_CRAWLING' | 'TREASURE_PATROL' | 'GUM_ROCKET' | 'COMPACTING' | 'INSPECTING' | 'RECHARGING' | 'WEB_SHOOTING' | 'WEB_SWINGING' | 'SPIDER_SENSE' | 'EATING_MEAT' | 'GUM_PUNCH' | 'HAT_TIP' | 'IDLE' | 'CURIOUS' | 'WALKING' | 'RUNNING' | 'CLIMBING' | 'EXPLORING' | 'HIDE_SEEK' | 'HOPSCOTCH' | 'MOVIE' | 'WRITING' | 'TELEPORTING' | 'FALLING' | 'HUGGING' | 'STORYTELLING' | 'WONDERING' | 'REASSEMBLING' | 'SUNBATHING' | 'COLLECTING' | 'TYPING' | 'WATCHING' | 'STRETCHING' | 'SITTING' | 'PLAYING' | 'SLEEPING' | 'WAKING' | 'WAVING' | 'JUMPING' | 'DANCING' | 'DRINKING_TEA' | 'DRAGGING' | 'PAUSED';
 export type Action = 'ceiling' | 'patrol' | 'rocket' | 'compact' | 'inspect' | 'recharge' | 'web' | 'swing' | 'sense' | 'meat' | 'punch' | 'hat' | 'pet' | 'tea' | 'play' | 'run' | 'climb' | 'explore' | 'hideSeek' | 'hop' | 'movie' | 'write' | 'teleport' | 'fall' | 'hug' | 'story' | 'wonder' | 'shuffle' | 'summer' | 'collect' | 'work' | 'watch' | 'stretch' | 'dance' | 'sleep' | 'wake' | 'pause' | 'resume' | 'outfit';
 export interface Settings {
@@ -11,7 +12,7 @@ export interface Settings {
   batterySaver: boolean; muted: boolean; volume: number; calmAfter: number;
   sitAfter: number; sleepAfter: number; snapEdges: boolean; playRadius: number;
   waterReminders: boolean; waterInterval: number; stretchReminders: boolean; stretchInterval: number;
-  eyeReminders: boolean; eyeInterval: number;
+  eyeReminders: boolean; eyeInterval: number; customReminders: CustomReminder[];
 }
 export interface Stats { happiness: number; energy: number; affection: number }
 export interface CursorSample {

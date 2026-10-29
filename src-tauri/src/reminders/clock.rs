@@ -1,26 +1,30 @@
 //! Active-time scheduling; no Windows dependencies so boundary tests run quickly.
 #[derive(Default)]
 pub struct ReminderClock {
-    elapsed: [f64; 3],
-    intervals: [f64; 3],
-    snooze: [Option<f64>; 3],
+    elapsed: Vec<f64>,
+    intervals: Vec<f64>,
+    snooze: Vec<Option<f64>>,
     cooldown: f64,
 }
 impl ReminderClock {
     pub fn tick(
         &mut self,
         seconds: f64,
-        intervals: [f64; 3],
+        intervals: impl AsRef<[f64]>,
         eligible: bool,
         available: bool,
     ) -> Option<usize> {
+        let intervals = intervals.as_ref();
+        self.elapsed.resize(intervals.len(), 0.);
+        self.intervals.resize(intervals.len(), 0.);
+        self.snooze.resize(intervals.len(), None);
         for (i, interval) in intervals.iter().enumerate() {
             if self.intervals[i] != *interval {
                 self.elapsed[i] = 0.;
                 self.snooze[i] = None;
             }
         }
-        self.intervals = intervals;
+        self.intervals.clone_from_slice(intervals);
         if !eligible {
             return None;
         }
@@ -39,7 +43,7 @@ impl ReminderClock {
             return None;
         }
         // A five-minute snooze has its own deadline, independent of card spacing.
-        let snoozed = (0..3)
+        let snoozed = (0..intervals.len())
             .filter(|&i| intervals[i] > 0. && self.snooze[i].is_some_and(|n| n <= 0.))
             .min_by(|&a, &b| self.snooze[a].unwrap().total_cmp(&self.snooze[b].unwrap()));
         let due = snoozed.or_else(|| {
@@ -47,7 +51,7 @@ impl ReminderClock {
                 return None;
             }
             // Serve the most overdue card first rather than always preferring water.
-            (0..3)
+            (0..intervals.len())
                 .filter(|&i| {
                     intervals[i] > 0. && self.snooze[i].is_none() && self.elapsed[i] >= intervals[i]
                 })
@@ -62,8 +66,15 @@ impl ReminderClock {
         Some(due)
     }
     pub fn respond(&mut self, kind: usize, snooze: bool) {
-        self.elapsed[kind] = 0.;
-        self.snooze[kind] = snooze.then_some(300.);
+        if let Some(elapsed) = self.elapsed.get_mut(kind) {
+            *elapsed = 0.;
+        }
+        if let Some(remaining) = self.snooze.get_mut(kind) {
+            *remaining = snooze.then_some(300.);
+        }
+    }
+    pub fn reset(&mut self, kind: usize) {
+        self.respond(kind, false);
     }
 }
 #[cfg(test)]

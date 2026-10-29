@@ -12,6 +12,10 @@ pub struct Reminder {
     kind: usize,
     preview: bool,
     remaining_ms: u64,
+    custom_id: Option<String>,
+    title: Option<String>,
+    message: Option<String>,
+    style: Option<String>,
 }
 struct Active {
     notice: Reminder,
@@ -22,6 +26,7 @@ struct State {
     last: Instant,
     active: Option<Active>,
     sequence: u64,
+    custom_ids: Vec<Option<String>>,
 }
 pub struct Reminders(Mutex<State>);
 impl Default for Reminders {
@@ -31,6 +36,7 @@ impl Default for Reminders {
             last: Instant::now(),
             active: None,
             sequence: 0,
+            custom_ids: vec![None; 10],
         }))
     }
 }
@@ -49,7 +55,7 @@ impl Reminders {
             })
     }
     pub fn tick(&self, app: &AppHandle, settings: &Settings, eligible: bool) -> Result<(), String> {
-        let intervals = [
+        let mut intervals = vec![
             if settings.water_reminders {
                 settings.water_interval * 60.
             } else {
@@ -68,19 +74,60 @@ impl Reminders {
         ];
         let changed = {
             let mut s = self.0.lock().map_err(|e| e.to_string())?;
+            // Stable slots prevent removing/reordering a reminder from transferring its timer.
+            for slot in 0..10 {
+                if s.custom_ids[slot]
+                    .as_ref()
+                    .is_some_and(|id| !settings.custom_reminders.iter().any(|r| &r.id == id))
+                {
+                    s.custom_ids[slot] = None;
+                    s.clock.reset(slot + 3);
+                }
+            }
+            for reminder in &settings.custom_reminders {
+                if !s
+                    .custom_ids
+                    .iter()
+                    .any(|id| id.as_ref() == Some(&reminder.id))
+                {
+                    if let Some(slot) = s.custom_ids.iter().position(Option::is_none) {
+                        s.custom_ids[slot] = Some(reminder.id.clone());
+                        s.clock.reset(slot + 3);
+                    }
+                }
+            }
+            for id in &s.custom_ids {
+                intervals.push(
+                    settings
+                        .custom_reminders
+                        .iter()
+                        .find(|r| Some(&r.id) == id.as_ref() && r.enabled)
+                        .map_or(0., |r| r.interval * 60.),
+                );
+            }
             let now = Instant::now();
             let dt = now.duration_since(s.last).as_secs_f64();
             s.last = now;
             let close = s.active.as_ref().is_some_and(|a| {
                 now.duration_since(a.shown).as_secs() >= 45
-                    || (!a.notice.preview && (!eligible || intervals[a.notice.kind] == 0.))
+                    || (!a.notice.preview
+                        && (!eligible
+                            || intervals.get(a.notice.kind).copied().unwrap_or(0.) == 0.
+                            || (a.notice.kind >= 3
+                                && s.custom_ids.get(a.notice.kind - 3).and_then(Option::as_ref)
+                                    != a.notice.custom_id.as_ref())))
             });
             if close {
                 s.active = None;
             }
             let available = s.active.is_none();
-            let due = s.clock.tick(dt, intervals, eligible, available);
+            let due = s.clock.tick(dt, &intervals, eligible, available);
             if let Some(kind) = due {
+                let custom = s
+                    .custom_ids
+                    .get(kind.wrapping_sub(3))
+                    .and_then(Option::as_ref)
+                    .and_then(|id| settings.custom_reminders.iter().find(|r| &r.id == id));
                 s.sequence += 1;
                 s.active = Some(Active {
                     notice: Reminder {
@@ -88,6 +135,10 @@ impl Reminders {
                         kind,
                         preview: false,
                         remaining_ms: 45000,
+                        custom_id: custom.map(|r| r.id.clone()),
+                        title: custom.map(|r| r.title.clone()),
+                        message: custom.map(|r| r.message.clone()),
+                        style: custom.map(|r| r.style.clone()),
                     },
                     shown: now,
                 });
@@ -99,7 +150,23 @@ impl Reminders {
         }
         Ok(())
     }
-    pub fn preview(&self, app: &AppHandle, kind: usize) -> Result<(), String> {
+    pub fn preview(
+        &self,
+        app: &AppHandle,
+        kind: usize,
+        custom_id: Option<String>,
+    ) -> Result<(), String> {
+        let config = app.state::<crate::settings::Config>().snapshot();
+        let custom = custom_id.as_ref().and_then(|id| {
+            config
+                .settings
+                .custom_reminders
+                .iter()
+                .find(|r| &r.id == id)
+        });
+        if custom_id.is_some() && custom.is_none() {
+            return Err("Reminder no longer exists".into());
+        }
         if kind > 2 {
             return Err("Unknown reminder".into());
         }
@@ -116,6 +183,10 @@ impl Reminders {
                     kind,
                     preview: true,
                     remaining_ms: 45000,
+                    custom_id: custom.map(|r| r.id.clone()),
+                    title: custom.map(|r| r.title.clone()),
+                    message: custom.map(|r| r.message.clone()),
+                    style: custom.map(|r| r.style.clone()),
                 },
                 shown: Instant::now(),
             });

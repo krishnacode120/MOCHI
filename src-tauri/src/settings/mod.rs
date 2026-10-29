@@ -4,6 +4,29 @@ use tauri::{AppHandle, Manager};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
+pub struct CustomReminder {
+    pub id: String,
+    pub title: String,
+    pub message: String,
+    pub interval: f64,
+    pub enabled: bool,
+    pub style: String,
+}
+impl Default for CustomReminder {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            title: "A little reminder".into(),
+            message: String::new(),
+            interval: 60.,
+            enabled: true,
+            style: "eyes".into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct Settings {
     pub character: String,
     pub climate: String,
@@ -44,6 +67,7 @@ pub struct Settings {
     pub stretch_interval: f64,
     pub eye_reminders: bool,
     pub eye_interval: f64,
+    pub custom_reminders: Vec<CustomReminder>,
 }
 impl Default for Settings {
     fn default() -> Self {
@@ -87,6 +111,7 @@ impl Default for Settings {
             stretch_interval: 60.,
             eye_reminders: false,
             eye_interval: 30.,
+            custom_reminders: Vec::new(),
         }
     }
 }
@@ -117,6 +142,26 @@ impl Settings {
         bounded(&mut self.water_interval, 10., 240., 45.);
         bounded(&mut self.stretch_interval, 10., 240., 60.);
         bounded(&mut self.eye_interval, 10., 240., 30.);
+        let mut ids = std::collections::HashSet::new();
+        self.custom_reminders.retain(|r| {
+            !r.id.is_empty()
+                && r.id.len() <= 64
+                && r.id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+                && ids.insert(r.id.clone())
+        });
+        self.custom_reminders.truncate(10);
+        for r in &mut self.custom_reminders {
+            r.title = r.title.trim().chars().take(32).collect();
+            if r.title.is_empty() {
+                r.title = "A little reminder".into();
+            }
+            r.message = r.message.trim().chars().take(80).collect();
+            bounded(&mut r.interval, 5., 1440., 60.);
+            r.interval = r.interval.round();
+            if !["water", "stretch", "eyes"].contains(&r.style.as_str()) {
+                r.style = "eyes".into();
+            }
+        }
         self.sit_after = self.sit_after.max(self.calm_after);
         self.sleep_after = self.sleep_after.max(self.sit_after);
         self.particles = self.particles.min(32);

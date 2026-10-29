@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { usePetStore } from '../../stores/settings';
 import { native, reportError } from '../../services/native';
 
-interface Notice { id: number; kind: number; preview: boolean; remainingMs: number }
+interface Notice { id: number; kind: number; preview: boolean; remainingMs: number; customId?: string | null; title?: string | null; message?: string | null; style?: string | null }
 const messages = [
-  { name: 'WATER BREAK', title: 'A sip of happy.', body: 'One little sip for you. One happy little Mochi.', done: 'Had a sip', tone: 'water' },
-  { name: 'STRETCH BREAK', title: 'Uncurl a little.', body: 'Roll your shoulders, reach up high. You deserve a soft little pause.', done: 'All stretched', tone: 'stretch' },
-  { name: 'EYE BREAK', title: 'A softer focus.', body: 'Let your eyes wander somewhere far away. I’ll keep your place.', done: 'Eyes refreshed', tone: 'eyes' },
+  { name: 'WATER BREAK', title: 'A sip of happy.', body: 'A little water, a little happy.', done: 'Had a sip', tone: 'water' },
+  { name: 'STRETCH BREAK', title: 'Uncurl a little.', body: 'Uncurl, stretch, and breathe.', done: 'All stretched', tone: 'stretch' },
+  { name: 'EYE BREAK', title: 'A softer focus.', body: 'Look far away. I’ll keep your place.', done: 'Eyes refreshed', tone: 'eyes' },
 ];
 function CareFriend({ kind }: { kind: number }) {
   return <svg className="care-friend" viewBox="0 0 112 100" fill="none" aria-hidden="true">
@@ -23,6 +24,8 @@ function CareFriend({ kind }: { kind: number }) {
 }
 export function Reminder() {
   const [notice, setNotice] = useState<Notice | null>(native ? null : { id: 0, kind: Math.min(2, Math.max(0, Number(new URLSearchParams(location.search).get('kind')) || 0)), preview: true, remainingMs: 45000 });
+  const saved = usePetStore(s => s.settings.customReminders);
+  const customPreview = !native ? saved.find(r => r.id === new URLSearchParams(location.search).get('custom')) : undefined;
   const [busy, setBusy] = useState(false);
   const [remaining, setRemaining] = useState(45);
   useEffect(() => {
@@ -46,7 +49,10 @@ export function Reminder() {
     return () => window.clearInterval(timer);
   }, [notice]);
   if (!notice) return null;
-  const message = messages[notice.kind] ?? messages[0];
+  const custom = customPreview ?? (notice.customId ? { title:notice.title, message:notice.message, style:notice.style } : null);
+  const styleIndex = custom ? Math.max(0, ['water','stretch','eyes'].indexOf(custom.style ?? 'eyes')) : notice.kind;
+  const base = messages[styleIndex] ?? messages[0];
+  const message = custom ? { ...base, name: 'JUST FOR YOU', title: custom.title || 'A little reminder', body:custom.message || 'A little nudge from Mochi. ♡', done:'Done' } : base;
   const respond = async (snooze: boolean) => {
     if (busy) return;
     setBusy(true);
@@ -56,11 +62,11 @@ export function Reminder() {
     } catch (e) { reportError(e); setBusy(false); }
   };
   return <main className="reminder-card" data-care={message.tone} aria-labelledby="care-title">
-    <div className="reminder-label"><span className="care-dot"/> A LITTLE CARE FROM MOCHI <small>{notice.preview ? 'PREVIEW' : message.name}</small></div>
-    <div className="care-heading"><div><span className="care-note">a tiny pause, just for you</span><h1 id="care-title">{message.title}</h1></div><CareFriend kind={notice.kind}/></div>
-    <p className="care-message">{message.body}</p>
-    <div className="reminder-actions"><button className="reminder-done" disabled={busy} onClick={() => void respond(false)}>{notice.preview ? 'Lovely, close preview' : message.done} <span aria-hidden="true">♡</span></button>{!notice.preview && <button disabled={busy} onClick={() => void respond(true)}>Snooze 5 min</button>}</div>
-    <div className="care-footer"><span>{notice.preview ? 'Just a preview · your timer stays unchanged' : 'Snooze counts 5 active minutes'}</span><span aria-live="off">Closes in {remaining}s</span></div>
+    <div className="reminder-label"><span className="care-dot"/> MOCHI CARE <small>{notice.preview ? 'PREVIEW' : message.name}</small></div>
+    <div className="care-heading"><div><h1 id="care-title">{message.title}</h1></div><CareFriend kind={styleIndex}/></div>
+    <p className="care-message" tabIndex={0}>{message.body}</p>
+    <div className="reminder-actions"><button className="reminder-done" disabled={busy} onClick={() => void respond(false)}>{notice.preview ? 'Close preview' : message.done} <span aria-hidden="true">♡</span></button>{!notice.preview && <button disabled={busy} onClick={() => void respond(true)}>Snooze 5 min</button>}</div>
+    <div className="care-footer"><span>{notice.preview ? 'Preview · timer unchanged' : '5 active min snooze'}</span><span aria-live="off">Closes in {remaining}s</span></div>
     <div className="care-time-track" aria-hidden="true"><i style={{ transform: `scaleX(${remaining / 45})` }}/></div>
   </main>;
 }

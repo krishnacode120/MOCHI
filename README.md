@@ -2,11 +2,11 @@
 
 An original, offline Windows desktop pet built with Tauri 2, Rust, React, TypeScript, PixiJS, and Zustand. Mochi wears a soft hoodie, follows your pointer with curious eyes, takes little tea breaks, and rests when you do. Pip is an optional floating companion.
 
-**Status: Windows release build and NSIS installer produced successfully.** Version 0.6.2 adds illustrated care cards, corrected reminder scheduling, and weather-responsive accessories for all five characters. Poses and routes share an action clock; speed changes no longer restart gestures. The installed app passed a focused visual check of the characters and cozy props. Per-user installation passed; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
+**Status: Windows release build and NSIS installer produced successfully.** Version 0.6.3 makes care cards compact (280 × 190) with smaller illustrations and shorter messages, and adds locally saved custom reminders. Reminder scheduling and weather-responsive accessories remain available. Poses and routes share an action clock; speed changes no longer restart gestures. Earlier releases passed a focused visual check of the characters and cozy props. Tests and UI checks were skipped for 0.6.3 at the user’s request; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
 
 ## Install and use
 
-[Download MOCHI 0.6.2 for Windows x64](downloads/Mochi_0.6.2_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
+[Download MOCHI 0.6.3 for Windows x64](downloads/Mochi_0.6.3_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
 
 Double-click **Mochi Start-Stop** on your desktop to start the companion. Double-click the same shortcut again to stop it cleanly and save its settings. Right-click Mochi or its tray icon to open Settings.
 
@@ -41,7 +41,9 @@ Double-click **Mochi Start-Stop** on your desktop to start the companion. Double
 
 ## Gentle reminders
 
-- **Cute care cards:** illustrated water, stretch, and eye-break designs with a native-timed 45-second closing countdown. Previews never change your schedule.
+Under **Settings → Reminders → Your little reminders**, add up to 10 personal reminders. Give each a title, message, interval (5–1,440 active minutes), and cute card style. Edit, pause, preview, or remove them anytime. Custom reminders are saved locally and share the built-in snooze and pause rules.
+
+- **Cute care cards:** compact 280 × 190 cards with illustrated water, stretch, and eye-break designs with a native-timed 45-second closing countdown. Previews never change your schedule.
 - **Timing:** opening a card no longer pauses other reminder timers. Regular cards stay five active minutes apart; snoozes become due after five active minutes and wait only if another card is open. Acknowledging starts a fresh interval; restarting Mochi starts fresh timers.
 - **Water:** enabled by default, every 45 minutes of active time.
 - **Stretch and eye breaks:** optional, with separate intervals.
@@ -110,7 +112,7 @@ npm run tauri build
 Get-ChildItem .\src-tauri\target\release\bundle\nsis\*.exe
 ```
 
-The output is `src-tauri/target/release/bundle/nsis/Mochi_0.6.2_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
+The output is `src-tauri/target/release/bundle/nsis/Mochi_0.6.3_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
 
 ## Project map
 

@@ -10,7 +10,7 @@ export const defaults: Settings = {
   muted: true, volume: 0.2, calmAfter: 30, sitAfter: 120, sleepAfter: 300,
   snapEdges: true, playRadius: 180,
   waterReminders: true, waterInterval: 45, stretchReminders: false, stretchInterval: 60,
-  eyeReminders: false, eyeInterval: 30,
+  eyeReminders: false, eyeInterval: 30, customReminders: [],
 };
 export const initialStats: Stats = { happiness: 75, energy: 80, affection: 50 };
 export function validateSettings(input: Partial<Settings>): Settings {
@@ -28,6 +28,16 @@ export function validateSettings(input: Partial<Settings>): Settings {
   if (!['off', 'auto', 'sunny', 'rain', 'snow', 'wind'].includes(s.climate)) s.climate = defaults.climate;
   s.monitor = Math.round(s.monitor); s.particles = Math.round(s.particles);
   for (const key of ['waterInterval', 'stretchInterval', 'eyeInterval'] as const) s[key] = Math.round(Math.min(240, Math.max(10, s[key])));
+  const ids = new Set<string>();
+  s.customReminders = (Array.isArray(input.customReminders) ? input.customReminders : []).filter(r => {
+    if (!r || typeof r.id !== 'string' || !/^[a-zA-Z0-9-]{1,64}$/.test(r.id) || ids.has(r.id)) return false;
+    ids.add(r.id); return true;
+  }).slice(0, 10).map(r => ({
+    id: r.id, title: Array.from(typeof r.title === 'string' ? r.title.trim() : '').slice(0,32).join('') || 'A little reminder',
+    message: Array.from(typeof r.message === 'string' ? r.message.trim() : '').slice(0,80).join(''),
+    interval: Math.round(Math.max(5, Math.min(1440, Number.isFinite(r.interval) ? r.interval : 60))),
+    enabled: r.enabled === true, style: ['water','stretch','eyes'].includes(r.style) ? r.style : 'eyes',
+  }));
   return s;
 }
 interface Store { settings: Settings; stats: Stats; state: PetState; error: string | null; ready: boolean;
