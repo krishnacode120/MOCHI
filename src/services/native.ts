@@ -35,6 +35,10 @@ export async function command(name: 'show' | 'hide' | 'settings' | 'reset' | 'qu
   else if (name === 'settings') document.getElementById('settings')?.scrollIntoView({ behavior: 'smooth' });
 }
 export const setRegions = (regions: HitEllipse[]) => native ? invoke<void>('set_hit_regions', { regions }) : Promise.resolve();
+export const dropPet = () => native ? invoke<void>('drop_pet') : Promise.resolve().then(() => {
+  window.dispatchEvent(new CustomEvent('mochi-fall-motion', { detail: 'falling' }));
+  window.setTimeout(() => window.dispatchEvent(new CustomEvent('mochi-fall-motion', { detail: 'landed' })), 1200);
+});
 export const beginDrag = () => native ? invoke<void>('begin_drag') : Promise.resolve();
 export const endDrag = () => native ? invoke<void>('end_drag') : Promise.resolve();
 export const movePet = (dx: number, dy: number, returning = false, wall = false) => native ? invoke<void>('move_pet', { dx, dy, returning, wall }) : Promise.resolve();
@@ -47,6 +51,7 @@ export async function connect() {
     cleanups.push(await listen<Stats>('stats-changed', e => usePetStore.getState().setStats(e.payload)));
     cleanups.push(await listen<CursorSample>('cursor', e => Object.assign(cursor, e.payload)));
     cleanups.push(await listen<Action>('action', e => actions.forEach(fn => fn(e.payload))));
+    cleanups.push(await listen<string>('fall-motion', e => { if (['falling','landed'].includes(e.payload)) window.dispatchEvent(new CustomEvent('mochi-fall-motion', { detail:e.payload })); }));
     cleanups.push(await listen('drag-ended', () => window.dispatchEvent(new Event('mochi-drag-ended'))));
     cleanups.push(await listen('position-reset', () => window.dispatchEvent(new Event('mochi-position-reset'))));
     cleanups.push(await listen<string>('native-error', e => reportError(e.payload)));

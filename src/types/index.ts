@@ -1,5 +1,5 @@
 export interface CustomReminder { id: string; title: string; message: string; interval: number; enabled: boolean; style: 'water' | 'stretch' | 'eyes' }
-export type PetState = 'CEILING_CRAWLING' | 'TREASURE_PATROL' | 'GUM_ROCKET' | 'COMPACTING' | 'INSPECTING' | 'RECHARGING' | 'WEB_SHOOTING' | 'WEB_SWINGING' | 'SPIDER_SENSE' | 'EATING_MEAT' | 'GUM_PUNCH' | 'HAT_TIP' | 'IDLE' | 'CURIOUS' | 'WALKING' | 'RUNNING' | 'CLIMBING' | 'EXPLORING' | 'HIDE_SEEK' | 'HOPSCOTCH' | 'MOVIE' | 'WRITING' | 'TELEPORTING' | 'FALLING' | 'HUGGING' | 'STORYTELLING' | 'WONDERING' | 'REASSEMBLING' | 'SUNBATHING' | 'COLLECTING' | 'TYPING' | 'WATCHING' | 'STRETCHING' | 'SITTING' | 'PLAYING' | 'SLEEPING' | 'WAKING' | 'WAVING' | 'JUMPING' | 'DANCING' | 'DRINKING_TEA' | 'DRAGGING' | 'PAUSED';
+export type PetState = 'CEILING_CRAWLING' | 'TREASURE_PATROL' | 'GUM_ROCKET' | 'COMPACTING' | 'INSPECTING' | 'RECHARGING' | 'WEB_SHOOTING' | 'WEB_SWINGING' | 'SPIDER_SENSE' | 'EATING_MEAT' | 'GUM_PUNCH' | 'HAT_TIP' | 'IDLE' | 'CURIOUS' | 'WALKING' | 'RUNNING' | 'CLIMBING' | 'EXPLORING' | 'HIDE_SEEK' | 'HOPSCOTCH' | 'MOVIE' | 'WRITING' | 'TELEPORTING' | 'LANDING' | 'FALLING' | 'HUGGING' | 'STORYTELLING' | 'WONDERING' | 'REASSEMBLING' | 'SUNBATHING' | 'COLLECTING' | 'TYPING' | 'WATCHING' | 'STRETCHING' | 'SITTING' | 'PLAYING' | 'SLEEPING' | 'WAKING' | 'WAVING' | 'JUMPING' | 'DANCING' | 'DRINKING_TEA' | 'DRAGGING' | 'PAUSED';
 export type Action = 'ceiling' | 'patrol' | 'rocket' | 'compact' | 'inspect' | 'recharge' | 'web' | 'swing' | 'sense' | 'meat' | 'punch' | 'hat' | 'pet' | 'tea' | 'play' | 'run' | 'climb' | 'explore' | 'hideSeek' | 'hop' | 'movie' | 'write' | 'teleport' | 'fall' | 'hug' | 'story' | 'wonder' | 'shuffle' | 'summer' | 'collect' | 'work' | 'watch' | 'stretch' | 'dance' | 'sleep' | 'wake' | 'pause' | 'resume' | 'outfit';
 export interface Settings {
   character: 'mochi' | 'walle' | 'olaf' | 'spiderman' | 'luffy'; climate: 'off' | 'auto' | 'sunny' | 'rain' | 'snow' | 'wind';
@@ -18,7 +18,7 @@ export interface Stats { happiness: number; energy: number; affection: number }
 export interface CursorSample {
   x: number; y: number; localX: number; localY: number; velocity: number;
   stationaryMs: number; idleMs: number; fullscreen: boolean; battery: boolean; visible: boolean;
-  typing: boolean;
+  typing: boolean; floorGap?: number;
 }
 export interface MovementBounds { left: number; right: number; top: number; bottom: number }
 export interface WorkArea { name: string; x: number; y: number; width: number; height: number; scale: number }

@@ -2,7 +2,7 @@ import type { PetState } from '../../types';
 import { tripSeconds } from '../physics/adventures';
 export type Source = 'idle' | 'system' | 'user';
 const resting = new Set<PetState>(['IDLE', 'CURIOUS', 'SITTING']);
-export const durations: Partial<Record<PetState, number>> = { COMPACTING: 8000, INSPECTING: 7000, RECHARGING: 10000, WEB_SHOOTING: 5000, SPIDER_SENSE: 4500, EATING_MEAT: 9000, GUM_PUNCH: 6000, HAT_TIP: 5000, WRITING: 18000, HUGGING: 5000, STORYTELLING: 9000, WONDERING: 7000, REASSEMBLING: 6500, SUNBATHING: 8000, COLLECTING: 8500, WAVING: 2600, JUMPING: 1500, DANCING: 5400, DRINKING_TEA: 6500, WAKING: 2800, TYPING: 12000, WATCHING: 7000, STRETCHING: 5000, SITTING: 12000 };
+export const durations: Partial<Record<PetState, number>> = { LANDING: 900, COMPACTING: 8000, INSPECTING: 7000, RECHARGING: 10000, WEB_SHOOTING: 5000, SPIDER_SENSE: 4500, EATING_MEAT: 9000, GUM_PUNCH: 6000, HAT_TIP: 5000, WRITING: 18000, HUGGING: 5000, STORYTELLING: 9000, WONDERING: 7000, REASSEMBLING: 6500, SUNBATHING: 8000, COLLECTING: 8500, WAVING: 2600, JUMPING: 1500, DANCING: 5400, DRINKING_TEA: 6500, WAKING: 2800, TYPING: 12000, WATCHING: 7000, STRETCHING: 5000, SITTING: 12000 };
 export class PetMachine {
   state: PetState = 'IDLE';
   since = 0;
@@ -17,8 +17,8 @@ export class PetMachine {
   request(next: PetState, source: Source, now: number): boolean {
     if (next === this.state) return false;
     if (this.state === 'PAUSED' && next !== 'IDLE') return false;
-    if (next === 'PAUSED') this.previous = this.state === 'SLEEPING' ? 'SLEEPING' : 'IDLE';
-    if (this.state === 'DRAGGING' && !['IDLE', 'PAUSED'].includes(next)) return false;
+    if (next === 'PAUSED') this.previous = ['SLEEPING','FALLING','LANDING'].includes(this.state) ? this.state : 'IDLE';
+    if (this.state === 'DRAGGING' && !['IDLE', 'FALLING', 'LANDING', 'PAUSED'].includes(next)) return false;
     if (this.state === 'SLEEPING' && !['WAKING', 'DRAGGING', 'PAUSED'].includes(next)) {
       if (source !== 'user') return false;
       this.pending = next;

@@ -14,7 +14,7 @@ export class Behavior {
             this.recent = [];
             this.nextAction = now + 12000;
         }
-        if (m.state === 'PAUSED' || m.state === 'DRAGGING' || m.state === 'MOVIE')
+        if (m.state === 'PAUSED' || m.state === 'DRAGGING' || m.state === 'MOVIE' || m.state === 'FALLING' || m.state === 'LANDING')
             return;
         if (m.state === 'SLEEPING') {
             if (!m.manualSleep && cursor.idleMs < 2000)

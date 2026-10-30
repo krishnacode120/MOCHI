@@ -26,6 +26,7 @@ pub struct Sample {
     battery: bool,
     visible: bool,
     typing: bool,
+    floor_gap: f64,
 }
 pub struct Worker {
     stop: Arc<AtomicBool>,
@@ -42,6 +43,8 @@ impl Worker {
             let mut next_recovery = Instant::now();
             let mut fullscreen = false;
             let mut battery = false;
+            let mut floor_edge = 0.;
+            let mut pet_height = 340.;
             let mut last_error = Instant::now() - Duration::from_secs(60);
             let mut next_reminder = Instant::now();
             let mut typed_at: Option<Instant> = None;
@@ -54,12 +57,17 @@ impl Worker {
                     let config = app.state::<Config>().snapshot();
                     let s = &config.settings;
                     let cursor = platform::cursor()?;
-                    desktop::drag_tick(&app, cursor)?;
+
                     let idle_ms = platform::idle_ms()?;
                     if now >= next_environment {
                         next_environment = now + Duration::from_secs(2);
                         fullscreen = platform::fullscreen(&window);
                         battery = platform::battery();
+                        let pos = window.outer_position().map_err(|e| e.to_string())?;
+                        let areas = crate::monitor::all(&app)?;
+                        let area = crate::monitor::nearest(&areas, Position { x: pos.x, y: pos.y });
+                        floor_edge = (area.y as f64) + area.height as f64;
+                        pet_height = window.outer_size().map_err(|e| e.to_string())?.height as f64;
                     }
                     if now >= next_recovery {
                         next_recovery = now + Duration::from_secs(3);
@@ -82,6 +90,13 @@ impl Worker {
                         })
                         .unwrap_or(0.);
                     previous = Some((cursor, now));
+                    let visible_now = window.is_visible().map_err(|e| e.to_string())?;
+                    let paused_now = app.state::<crate::Paused>().0.load(Ordering::Relaxed);
+                    desktop::drag_tick(
+                        &app,
+                        cursor,
+                        visible_now && !paused_now && (!fullscreen || !s.fullscreen_pause),
+                    )?;
                     let position = window.outer_position().map_err(|e| e.to_string())?;
                     let scale = window.scale_factor().map_err(|e| e.to_string())? * s.size;
                     let visible = window.is_visible().map_err(|e| e.to_string())?;
@@ -113,6 +128,7 @@ impl Worker {
                         typed_at = None;
                     }
                     let sample = Sample {
+                        floor_gap: (floor_edge - position.y as f64 - pet_height) / scale,
                         x: cursor.x,
                         y: cursor.y,
                         local_x: (cursor.x as f64 - position.x as f64) / scale,
@@ -143,13 +159,25 @@ impl Worker {
                                 && idle_ms < 300000,
                         )?;
                     }
+                    let falling = app
+                        .state::<desktop::Desktop>()
+                        .fall
+                        .lock()
+                        .map_err(|e| e.to_string())?
+                        .is_some();
                     Ok(
                         if paused
                             || !visible
                             || (fullscreen && s.fullscreen_pause)
-                            || idle_ms > 30000
+                            || (idle_ms > 30000 && !falling)
                         {
                             200
+                        } else if falling {
+                            if s.battery_saver || battery {
+                                33
+                            } else {
+                                16
+                            }
                         } else if s.battery_saver || battery {
                             80
                         } else {

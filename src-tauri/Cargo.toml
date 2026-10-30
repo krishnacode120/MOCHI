@@ -1,6 +1,6 @@
 [package]
 name = "mochi-desktop"
-version = "0.6.3"
+version = "0.6.4"
 description = "Your cozy offline desktop companion"
 authors = ["MOCHI contributors"]
 license = "MIT"

@@ -32,7 +32,7 @@ export function createWeatherWardrobe(r: MochiRig, character: Settings['characte
     return { umbrella, sunglasses, scarf, scarfTail: tail, weatherProps };
 }
 // Accessories are stowed for acrobatics and sleep so they cannot clip or obstruct signature gestures.
-const unsafe = new Set<PetState>(['CEILING_CRAWLING','CLIMBING','HIDE_SEEK','EXPLORING','FALLING','GUM_ROCKET','WEB_SWINGING','TELEPORTING','DRAGGING','SLEEPING','WAKING','REASSEMBLING']);
+const unsafe = new Set<PetState>(['CEILING_CRAWLING','CLIMBING','HIDE_SEEK','EXPLORING','FALLING','GUM_ROCKET','WEB_SWINGING','TELEPORTING','DRAGGING','LANDING','SLEEPING','WAKING','REASSEMBLING']);
 export function updateWeatherWardrobe(r: MochiRig & ReturnType<typeof createWeatherWardrobe> & { character: Settings['character']; hat: Container }, time: number, dt: number, s: Settings, state: PetState) {
     const mode = weatherMode(time, s, state);
     if (unsafe.has(state) || mode === 'off') { r.weatherProps.forEach(p=>{p.visible=false;p.alpha=0;}); return; }

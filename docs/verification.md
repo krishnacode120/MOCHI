@@ -1,4 +1,11 @@
-# Verification status — 29 October 2026
+# Verification status — 30 October 2026
+
+## MOCHI 0.6.4 — Shimeji-inspired movement foundation
+
+- Added per-character chibi proportions, visible floor/wall/ceiling contact alignment, sampled drag-release velocity, native gravity, bounded rebounds and a separate settling landing pose. Final landing position becomes the new home. Falling/landing suspend automatic behavior and reminder eligibility.
+- Existing vector art remains in use. Application-window platforms, imported PNG/XML sprite packs, and the supplied Luffy image as a replacement asset are not part of this update.
+- Tests and UI/visual checks were not run, as requested. Production TypeScript/Vite compilation, native release compilation and NSIS packaging completed successfully. Per-user installation returned exit code 0 and MOCHI was restarted. Appearance, full character/action coverage and multi-monitor/DPI behavior remain unverified.
+- Installer: `downloads/Mochi_0.6.4_x64-setup.exe` — 1,565,536 bytes. SHA-256: `5be03d1d958a21648d7cd533c92d80900f235c99b04fd712329811bc5991bf86`.
 
 ## MOCHI 0.6.3 — compact and custom reminders
 

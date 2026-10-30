@@ -12,7 +12,7 @@ import { Behavior } from '../../engine/behavior/Behavior';
 import { PetMachine } from '../../engine/stateMachine/PetMachine';
 import { Particles } from '../../engine/particles/Particles';
 import { usePetStore } from '../../stores/settings';
-import { beginDrag, command, cursor, endDrag, movePet, movementBounds, native, onAction, publishState, reportError, saveSettings, saveStats, setRegions } from '../../services/native';
+import { beginDrag, command, cursor, dropPet, endDrag, movePet, movementBounds, native, onAction, publishState, reportError, saveSettings, saveStats, setRegions } from '../../services/native';
 import { adventure, traveling } from '../../engine/physics/adventures';
 import type { Action, HitEllipse, MovementBounds } from '../../types';
 import { playChime } from '../../services/sound';
@@ -50,11 +50,16 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
       let excursion = { x: 0, y: 0 }; let returning = false;
       let bounds: MovementBounds | null = null, tripId = 0, wallTrip = false;
       let sent = { x: 0, y: 0 }, routeVariant = 0;
+      let physicalFall = false;
       const machine = new PetMachine((state, old) => {
         const s = settings();
         animator.transition(state, s.reducedMotion, s.speed); usePetStore.setState({ state }); publishState(state);
         const id = ++tripId;
-        if (traveling(old) && state !== 'DRAGGING') returning = true;
+        if (state === 'FALLING') {
+          returning = false; bounds = null; excursion = {x:0,y:0}; sent = {x:0,y:0}; wallTrip = false;
+          if (!physicalFall) { physicalFall = true; void dropPet().catch(e => { physicalFall=false; machine.request('IDLE','user',elapsed); reportError(e); }); }
+        } else if (state !== 'PAUSED') physicalFall = false;
+        if (traveling(old) && state !== 'DRAGGING' && state !== 'FALLING') returning = true;
         if (traveling(state)) {
           bounds = null; returning = false; routeVariant = Math.random(); wallTrip ||= s.fullScreenRoam || state === 'CEILING_CRAWLING' || state === 'CLIMBING' || state === 'HIDE_SEEK';
           void movementBounds().then(value => { if (!disposed && id === tripId) bounds = value; }).catch(e => { reportError(e); if (id === tripId) machine.request('IDLE', 'user', elapsed); });
@@ -100,12 +105,24 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
       const pointerUp = () => {
         if (!down) return;
         down = null;
-        if (dragging) { dragging = false; void endDrag().catch(reportError); machine.request('IDLE', 'user', elapsed); return; }
+        if (dragging) { dragging = false; void endDrag().catch(e=>{ machine.request('IDLE','user',elapsed); reportError(e); }); if (!native) machine.request('FALLING', 'user', elapsed); return; }
         if (clickTimer) { clearTimeout(clickTimer); clickTimer = undefined; machine.request('JUMPING', 'user', elapsed); }
         else clickTimer = setTimeout(() => { clickTimer = undefined; request('pet'); }, 280);
       };
-      const cancel = () => { down = null; if (dragging) { dragging = false; void endDrag().catch(reportError); machine.request('IDLE', 'user', elapsed); } };
-      window.addEventListener('mochi-drag-ended', cancel);
+      const cancel = () => { down = null; if (dragging) { dragging = false; void endDrag().catch(e=>{ machine.request('IDLE','user',elapsed); reportError(e); }); if (!native) machine.request('FALLING', 'user', elapsed); } };
+      const dragEnded = () => { down = null; dragging = false; };
+      window.addEventListener('mochi-drag-ended', dragEnded);
+      const fallMotion = (event: Event) => {
+        const phase = (event as CustomEvent<string>).detail;
+        if (phase === 'falling') {
+          down = null; dragging = false; physicalFall = true;
+          machine.request('FALLING', 'user', elapsed);
+        } else if (phase === 'landed') {
+          physicalFall = false;
+          machine.request('LANDING', 'user', elapsed);
+        }
+      };
+      window.addEventListener('mochi-fall-motion', fallMotion);
       const resetExcursion = () => { machine.request('IDLE', 'user', elapsed); tripId++; excursion = { x: 0, y: 0 }; sent = { x: 0, y: 0 }; returning = false; wallTrip = false; bounds = null; };
       window.addEventListener('mochi-position-reset', resetExcursion);
       const context = (e: MouseEvent) => { e.preventDefault(); if (usePetStore.getState().settings.interactions) void command('menu').catch(reportError); };
@@ -167,7 +184,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         }
         if (native && regionClock >= regionAt && !regionBusy) {
           regionAt = regionClock + (s.batterySaver || cursor.battery ? 66 : 33); regionBusy = true;
-          const bounds = [...[rig.desk,rig.notebook,rig.snacks,rig.plant,rig.caption,...rig.signatureProps,...rig.weatherProps].filter(p=>p.visible).map(p=>p.getBounds()), ...climate.regions(), ...rig.hitParts.filter(part => part.visible && part.alpha > .01).map(part => part.getBounds()), ...(rig.blanket.visible ? [rig.quilt.getBounds(), rig.pillow.getBounds(), rig.moon.getBounds(), ...rig.nightStars.map(star => star.getBounds())] : []), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), rig.shadow.getBounds()];
+          const bounds = [...[rig.desk,rig.notebook,rig.snacks,rig.plant,rig.caption,...rig.signatureProps,...rig.weatherProps].filter(p=>p.visible).map(p=>p.getBounds()), ...climate.regions(), ...rig.hitParts.filter(part => part.visible && part.alpha > .01).map(part => part.getBounds()), ...(rig.blanket.visible ? [rig.quilt.getBounds(), rig.pillow.getBounds(), rig.moon.getBounds(), ...rig.nightStars.map(star => star.getBounds())] : []), ...(rig.cup.visible ? [rig.cup.getBounds()] : []), ...(rig.laptop.visible ? [rig.laptop.getBounds()] : []), ...(rig.balloons.visible ? [...rig.balloonParts.map(p => p.getBounds()), rig.strings.getBounds()] : []), ...(pip.visible ? [pip.getBounds()] : []), ...particles.regions(), ...(rig.shadow.visible ? [rig.shadow.getBounds()] : [])];
           // Elliptical visual envelopes also define the real Windows input region.
           const regions: HitEllipse[] = bounds.filter(b => b.width > 0 && b.height > 0).map(b => {
             const x = Math.max(0, b.x - 3), y = Math.max(0, b.y - 3);
@@ -177,7 +194,7 @@ export function PetRenderer({ preview = false }: { preview?: boolean }) {
         }
         if (import.meta.env.DEV && host.current) host.current.dataset.fps = String(Math.round(ticker.FPS));
       });
-      cleanup = () => { unsubscribe(); clearTimeout(clickTimer); clearInterval(statsTimer); window.removeEventListener('keydown', previewKey); window.removeEventListener('mochi-drag-ended', cancel); window.removeEventListener('mochi-position-reset', resetExcursion); cancel(); app.destroy(true, { children: true }); };
+      cleanup = () => { unsubscribe(); clearTimeout(clickTimer); clearInterval(statsTimer); window.removeEventListener('keydown', previewKey); window.removeEventListener('mochi-drag-ended', dragEnded); window.removeEventListener('mochi-fall-motion', fallMotion); window.removeEventListener('mochi-position-reset', resetExcursion); cancel(); app.destroy(true, { children: true }); };
     };
     initialize().catch(reportError);
     return () => { disposed = true; cleanup(); };

@@ -2,11 +2,11 @@
 
 An original, offline Windows desktop pet built with Tauri 2, Rust, React, TypeScript, PixiJS, and Zustand. Mochi wears a soft hoodie, follows your pointer with curious eyes, takes little tea breaks, and rests when you do. Pip is an optional floating companion.
 
-**Status: Windows release build and NSIS installer produced successfully.** Version 0.6.3 makes care cards compact (280 × 190) with smaller illustrations and shorter messages, and adds locally saved custom reminders. Reminder scheduling and weather-responsive accessories remain available. Poses and routes share an action clock; speed changes no longer restart gestures. Earlier releases passed a focused visual check of the characters and cozy props. Tests and UI checks were skipped for 0.6.3 at the user’s request; multi-monitor/DPI and uninstallation remain manual. See [verification status](docs/verification.md).
+**Status: MOCHI 0.6.4 adds a Shimeji-inspired movement foundation.** Chibi proportions, visible foot/hand contact alignment, mouse-velocity throws, native gravity and a settling landing pose join the existing character behaviors, compact reminders and weather accessories. Characters remain vector artwork, not imported PNG sprite packs. Tests and UI checks are skipped at the user’s request; animation appearance and multi-monitor/DPI behavior are not verified in this release. See [verification status](docs/verification.md).
 
 ## Install and use
 
-[Download MOCHI 0.6.3 for Windows x64](downloads/Mochi_0.6.3_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
+[Download MOCHI 0.6.4 for Windows x64](downloads/Mochi_0.6.4_x64-setup.exe). Open the file on GitHub and choose **Download raw file**, then run it. WebView2 must already be installed. The installer is unsigned and installs for the current Windows user.
 
 Double-click **Mochi Start-Stop** on your desktop to start the companion. Double-click the same shortcut again to stop it cleanly and save its settings. Right-click Mochi or its tray icon to open Settings.
 
@@ -17,13 +17,14 @@ Double-click **Mochi Start-Stop** on your desktop to start the companion. Double
 - **WALL-E:** weathered chassis, binocular eyes and rigid treads; plant protection, compacting cubes, treasure inspection, solar recharge, and a floor patrol with inspection stops.
 - **Spider-Man:** red/blue suit, white mask lenses, web pattern and chest emblem; wall crawling, wrist webs, full-width swinging, spider-sense, and an inverted ceiling patrol.
 - **Luffy:** straw hat, black hair, under-eye scar, red vest and sandals; meat eating, elastic Gum-Gum punches, a hat-tip greeting, and full-screen rocket jumps.
-- **Full-screen trips:** web swings and rocket jumps visit both sides and the upper work area. Pip play uses the full width. All trips return home. Settings > Behavior > Explore the desktop starts your character's tour.
+- **Full-screen trips:** web swings and rocket jumps visit both sides and the upper work area. Pip play uses the full width. Scripted trips return home; gravity falls save the landing position. Settings > Behavior > Explore the desktop starts your character's tour.
+- **Shimeji-inspired contact:** larger heads and compact bodies, anchored feet during standing/walking/landing, side hand contact for climbing, and ceiling contact for upside-down poses. Screen and taskbar boundaries are supported; sitting on application windows and XML/PNG sprite-pack importing are not implemented.
 - **Varied behavior:** signature activities are weighted by character and avoid the last three choices. Switching characters clears incompatible queued actions. Quiet mode and reduced motion remain supported.
 - See [character references](docs/character-references.md) for the reference sources and implementation scope.
 - **Blanket naps:** automatic inactivity sleep curls the character onto a pillow beneath a quilt, with a moon and twinkling stars. Sleep thresholds remain in Behavior settings.
 - **Movie time:** popcorn and cola accompany you during fullscreen playback. Start and end Movie time from the action buttons or tray; Mochi does not identify or read movies automatically.
 - **Work with me / Write at desk:** a small wooden desk, laptop or notebook, and hand/pencil movement. No actual typed text is displayed or saved.
-- **Teleport / Tumble down:** fade between screen positions, or fall, bounce, and recover. Routes remain inside the current monitor work area and return home; reduced motion suppresses travel.
+- **Teleport / Tumble down:** fade between screen positions, or fall under gravity and settle on the work-area floor. Drag and release to toss the pet; release without moving to drop it gently. Falls save the new position. Reduced motion and quiet mode suppress the physical throw.
 - **Weather reactions:** rain brings an umbrella, sunshine brings sunglasses, and snow/wind bring a cozy scarf. Olaf enjoys snow; Luffy holds his hat in wind. Props ease in and out, stay still with reduced motion, and are stowed for sleep and acrobatics.
 - **Settings → Behavior → Weather scene:** Off, Auto, Sunny, Rain, Snow, or Wind. Auto cycles every 75 active seconds. These are local decorative scenes, without location access or live forecasts. Quiet mode hides weather; reduced motion keeps it still.
 
@@ -112,7 +113,7 @@ npm run tauri build
 Get-ChildItem .\src-tauri\target\release\bundle\nsis\*.exe
 ```
 
-The output is `src-tauri/target/release/bundle/nsis/Mochi_0.6.3_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
+The output is `src-tauri/target/release/bundle/nsis/Mochi_0.6.4_x64-setup.exe`. Run `node scripts/prepare-download.mjs` after a successful build to copy the current installer and SHA-256 checksum into `downloads/`. Signing is not configured. The remaining desktop and installation checks are listed in the verification document.
 
 ## Project map
 

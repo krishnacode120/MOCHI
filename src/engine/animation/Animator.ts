@@ -1,3 +1,4 @@
+import { applyContacts } from './contacts';
 import { updateWeatherWardrobe } from '../../characters/weather';
 import { poseTargets, smooth } from './timing';
 import { updateCharacter, type CharacterRig } from '../../characters/createCharacter';
@@ -14,6 +15,7 @@ export class Animator {
     private floating = 0;
     private wallSide = 1;
     private ceiling = 0;
+    private floorContact = 0;
     state: PetState = 'IDLE';
     facing = 1;
     motion = { ceiling: 0, speed: 0, grip: 0, side: 1, hide: 0, float: 0, hop: 0 };
@@ -21,6 +23,7 @@ export class Animator {
     update(r: CharacterRig, _time: number, dt: number, c: CursorSample, s: Settings) {
         this.clock += dt * s.speed;
         const t = this.clock, p = this.pose;
+        this.floorContact += (((c.floorGap ?? Infinity) <= 1.5 ? 1 : 0)-this.floorContact)*(1-Math.exp(-dt*18));
         const sleeping = this.state === 'SLEEPING';
         const gentle = s.reducedMotion || s.quiet;
         const target = poseTargets(this.state, this.actionTime, gentle);
@@ -88,8 +91,8 @@ export class Animator {
         const dx = Math.max(-1, Math.min(1, (c.localX - 160) / 180)) * facing;
         const dy = Math.max(-1, Math.min(1, (c.localY - 165) / 150));
         const watching = this.state === 'WATCHING' ? Math.sin(t * .9) * .035 * amount : 0;
-        r.head.position.set(-35 * p.sleep, -119 + 54 * p.sleep);
-        r.head.scale.set(1 - p.sleep * .16);
+        r.head.position.set(-35 * p.sleep, r.proportions.headY + 45 * p.sleep);
+        r.head.scale.set(r.proportions.head * (1 - p.sleep * .16));
         r.head.rotation = lerp(r.head.rotation, (gaze ? dx * .055 : -p.sleep * .48) + watching);
         r.pillow.visible = r.blanket.visible = r.night.visible = p.sleep > .01;
         r.pillow.alpha = r.blanket.alpha = r.night.alpha = p.sleep;
@@ -97,7 +100,7 @@ export class Animator {
         r.moon.y = 139 + (gentle ? 0 : Math.sin(t * .6) * 2);
         r.nightStars.forEach((star, i) => { star.alpha = gentle ? .9 : .75 + .25 * Math.sin(t * 1.1 + i * 1.6); });
         const hairEase = 1 - Math.exp(-dt * 4);
-        r.leftArm.scale.y = 1;
+        r.leftArm.scale.y = r.rightArm.scale.y = 1;
         r.hair.rotation += (Math.sin(t * 1.8) * .009 * amount - r.rig.rotation * .3 - r.hair.rotation) * hairEase;
         r.balloons.visible = this.floating > .01;
         r.balloons.alpha = this.floating;
@@ -120,6 +123,24 @@ export class Animator {
         r.codeLines.children.forEach((line, i) => { line.scale.x = gentle ? 1 : .55 + .45 * ((Math.floor(t * 3) + i * 2) % 5) / 4; });
         updateCharacter(r, this.state, t, this.actionTime, dt, gentle, p.sleep);
         updateWeatherWardrobe(r, _time, dt, s, this.state);
+        r.body.scale.y *= r.proportions.torso;
+        r.leftLeg.scale.set(r.proportions.leg); r.rightLeg.scale.set(r.proportions.leg);
+        r.leftLeg.y = r.rightLeg.y = 12;
+        if (this.state === 'FALLING') {
+            const panic = gentle ? 0 : Math.sin(t*13);
+            r.leftArm.rotation=-2.3+panic*.2;r.rightArm.rotation=2.3-panic*.2;
+            r.leftLeg.rotation=-.4-panic*.12;r.rightLeg.rotation=.4+panic*.12;
+            r.rig.rotation=gentle?0:Math.sin(t*6)*.07;
+            if (r.character !== 'walle' && r.character !== 'spiderman') { r.mouth.visible=false;r.yawn.visible=true; }
+        }
+        if (this.state === 'LANDING' && !gentle) {
+            const settle=Math.sin(Math.PI*smooth(Math.min(1,this.actionTime/.65)));
+            if (r.character !== 'walle') { r.rig.scale.y*=1-.16*settle;r.rig.scale.x*=1+.08*settle; }
+            r.leftArm.rotation=.5*settle;r.rightArm.rotation=-.5*settle;
+            r.head.rotation*=1-.8*settle;
+        }
+        if (this.grip>.01) { r.leftArm.scale.y*=1+this.grip*.18;r.rightArm.scale.y*=1+this.grip*.18; }
+        applyContacts(r,this.state,this.floorContact,this.grip,this.wallSide,this.ceiling);
         r.shadow.scale.x = 1 + p.jump / 160;
         r.shadow.alpha = .12 * (1 - Math.max(this.grip, this.floating, this.hiding));
     }

@@ -1,7 +1,7 @@
 import type { MovementBounds, PetState } from '../../types';
 
-export const traveling = (state: PetState) => ['CEILING_CRAWLING', 'TREASURE_PATROL', 'GUM_ROCKET', 'WEB_SWINGING', 'WALKING', 'RUNNING', 'CLIMBING', 'PLAYING', 'EXPLORING', 'HIDE_SEEK', 'HOPSCOTCH', 'TELEPORTING', 'FALLING'].includes(state);
-export const tripSeconds: Partial<Record<PetState, number>> = { CEILING_CRAWLING: 32, TREASURE_PATROL: 24, GUM_ROCKET: 18, WEB_SWINGING: 24, TELEPORTING: 12, FALLING: 8, WALKING: 7, RUNNING: 20, PLAYING: 18, CLIMBING: 24, EXPLORING: 36, HIDE_SEEK: 22, HOPSCOTCH: 12 };
+export const traveling = (state: PetState) => ['CEILING_CRAWLING', 'TREASURE_PATROL', 'GUM_ROCKET', 'WEB_SWINGING', 'WALKING', 'RUNNING', 'CLIMBING', 'PLAYING', 'EXPLORING', 'HIDE_SEEK', 'HOPSCOTCH', 'TELEPORTING'].includes(state);
+export const tripSeconds: Partial<Record<PetState, number>> = { CEILING_CRAWLING: 32, TREASURE_PATROL: 24, GUM_ROCKET: 18, WEB_SWINGING: 24, TELEPORTING: 12, WALKING: 7, RUNNING: 20, PLAYING: 18, CLIMBING: 24, EXPLORING: 36, HIDE_SEEK: 22, HOPSCOTCH: 12 };
 export const ease = (x: number) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
 const mix = (a: number, b: number, t: number) => a + (b - a) * ease(t);
 export interface TripPose { ceiling: number; x: number; y: number; grip: number; side: number; hide: number; float: number; hop: number; vanish: number; warp: boolean }
@@ -50,11 +50,6 @@ export function adventure(state: PetState, seconds: number, bounds: MovementBoun
     pose.vanish=Math.max(...[3,6,9].map(at=>Math.max(0,1-Math.abs(time-at)/.45)));
     return pose;
   }
-  if (state === 'FALLING') {
-    const floor=bottom, lift=Math.max(top,-100);
-    pose.y=time<1.5?mix(0,lift,time/1.5):time<3?lift+(floor-lift)*Math.min(1,((time-1.5)/1.5)**2):time<4.5?floor-Math.min(45,floor-top)*Math.abs(Math.sin((time-3)/1.5*Math.PI)):mix(floor,0,(time-4.5)/3.5);
-    return pose;
-  }
   if (state === 'CLIMBING') {
     const wall = side < 0 ? bounds.left : bounds.right;
     pose.x = time < 5 ? mix(0, wall, time / 5) : time < 19 ? wall : mix(wall, 0, (time - 19) / 5);
@@ -89,8 +84,9 @@ export function adventure(state: PetState, seconds: number, bounds: MovementBoun
     const progress = Math.max(0, Math.min(1, (time - .5) / 11));
     pose.hop = Math.abs(Math.sin(progress * Math.PI * 6));
     pose.y = Math.max(bounds.top, -42) * pose.hop;
-  } else if (state === 'PLAYING' || state === 'RUNNING') {
-    pose.y = Math.max(bounds.top, -18) * Math.sin(Math.PI * time / duration) ** 2;
+  } else if (['WALKING','RUNNING','PLAYING'].includes(state)) {
+    const ground = ease(time / 1.2) * (1-ease((time-duration+1.2)/1.2));
+    pose.y = bottom * ground;
   }
   return pose;
 }

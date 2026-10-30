@@ -132,6 +132,11 @@ fn pet_action(app: AppHandle, action: String) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 #[tauri::command]
+fn drop_pet(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+    only_pet(&window)?;
+    desktop::start_fall(&app, 0., 0.)
+}
+#[tauri::command]
 fn publish_status(app: AppHandle, window: WebviewWindow, state: String) -> Result<(), String> {
     only_pet(&window)?;
     if ![
@@ -147,6 +152,7 @@ fn publish_status(app: AppHandle, window: WebviewWindow, state: String) -> Resul
         "WRITING",
         "TELEPORTING",
         "FALLING",
+        "LANDING",
         "HUGGING",
         "STORYTELLING",
         "WONDERING",
@@ -183,11 +189,17 @@ fn publish_status(app: AppHandle, window: WebviewWindow, state: String) -> Resul
     {
         return Err("Invalid pet state".into());
     }
+    if !["FALLING", "LANDING", "PAUSED"].contains(&state.as_str()) {
+        desktop::cancel_fall(&app)?;
+    }
     app.state::<Paused>()
         .0
         .store(state == "PAUSED", std::sync::atomic::Ordering::Relaxed);
     app.state::<Resting>().0.store(
-        matches!(state.as_str(), "SLEEPING" | "WAKING" | "DRAGGING"),
+        matches!(
+            state.as_str(),
+            "SLEEPING" | "WAKING" | "DRAGGING" | "FALLING" | "LANDING"
+        ),
         std::sync::atomic::Ordering::Relaxed,
     );
     app.emit("status", serde_json::json!({ "state": state }))
@@ -377,6 +389,7 @@ pub fn run() {
             window_command,
             pet_action,
             publish_status,
+            drop_pet,
             set_hit_regions,
             begin_drag,
             end_drag,

@@ -1,3 +1,4 @@
+import { proportions } from './proportions';
 import { createWeatherWardrobe } from './weather';
 import { envelope } from '../engine/animation/timing';
 import { drawCharacter } from './artwork';
@@ -51,7 +52,7 @@ export function createCharacter(settings: Settings) {
         part.alpha = 0;
     }
     const wardrobe = createWeatherWardrobe(r, character);
-    return { ...r, ...signature, ...wardrobe, character, eyeSpacing, nose, hat, lenses, desk, notebook, pencil, snacks, plant, caption, words };
+    return { ...r, ...signature, ...wardrobe, proportions: proportions[character], character, eyeSpacing, nose, hat, lenses, desk, notebook, pencil, snacks, plant, caption, words };
 }
 export type CharacterRig = ReturnType<typeof createCharacter>;
 const thoughts = ['Do clouds ever get tired?', 'Growing is quite an adventure.', 'A little kindness goes a long way.'];
@@ -105,8 +106,7 @@ export function updateCharacter(r: CharacterRig, state: PetState, time: number, 
         r.leftArm.rotation += (-.6 * weight - r.leftArm.rotation) * ease;
         r.rightArm.rotation += (.6 * weight - r.rightArm.rotation) * ease;
     }
-    if (state === 'FALLING' && !gentle)
-        r.rig.rotation = Math.sin(age * 4) * .22 * Math.sin(Math.PI * Math.min(1, age / 8));
+
     const message = state === 'HUGGING' ? 'A warm hug?' : state === 'WONDERING' ? thoughts[Math.floor(age / 2.4) % thoughts.length] : state === 'STORYTELLING' ? ['And then... a grand adventure!', 'There was a surprise!', 'And everyone found a friend.'][Math.min(2, Math.floor(age / 3))] : state === 'REASSEMBLING' ? 'Oops! All here again.' : state === 'SUNBATHING' ? 'Summer looks lovely!' : state === 'COLLECTING' ? 'A little green friend.' : '';
     animateSignature(r, state, age, dt, gentle, sleep);
     r.words.text = message;

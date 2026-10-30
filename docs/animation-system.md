@@ -40,7 +40,7 @@ Blanket/pillow and moon/star work already present in the workspace was preserved
 
 MOVIE is an explicit persistent action, toggleable from controls. It bypasses fullscreen animation suspension, while hidden windows still suspend. It prevents automatic sleep and spontaneous action interruptions until the user ends or changes the action. Keyboard activity and reminders still respect their fullscreen suppression.
 
-TELEPORTING uses discrete in-bounds destinations with brief fade-outs; the scene stays invisible while the native position update is in flight. FALLING uses acceleration, a rebound, and an eased recovery. Both honor reduced-motion and quiet travel suppression.
+TELEPORTING uses discrete in-bounds destinations with brief fade-outs; the scene stays invisible while the native position update is in flight. FALLING is driven by native gravity and drag-release velocity, followed by a distinct LANDING state. Falls save their destination instead of returning home. Both honor reduced-motion and quiet travel suppression.
 
 `Climate.ts` provides pooled, decorative sun/rain/snow/wind scenes. Automatic cycling uses active renderer time, never location or forecast data. Sleep hides climate effects in favor of the moon/stars, and quiet mode hides them.
 
@@ -66,3 +66,12 @@ The new trips use the existing native work-area clamp, serialized movement, inte
 ## Weather wardrobe (0.6.2)
 
 `weatherMode` resolves both particles and clothing from the same elapsed active-time value. `characters/weather.ts` allocates reusable umbrella, sunglasses, scarf, and scarf-tail graphics for each character. Attachments follow the head/rig and are included in native input/visual regions. Weather changes blend opacity; unsafe travel states stow props immediately before the pose rotates or exits the canvas. Reduced motion leaves clothing visible but removes flutter and shivers. This remains offline decorative weather.
+
+
+## Shimeji-inspired foundation (0.6.4)
+
+`characters/proportions.ts` defines compact body/leg proportions and larger heads per character, preserving WALL-E’s rigid treads. `animation/contacts.ts` anchors visible feet to a resting baseline and then the work-area floor, fits climbing poses within the canvas, and aligns wall hands / inverted feet. This is still procedural vector animation; no external sprite sheets or XML behavior files are loaded.
+
+The native cursor worker samples drag velocity, applies elapsed-time gravity, limits throw speed and rebounds at the current monitor’s sides/ceiling. At the work-area floor it emits a landing event and saves the final position. No application-window collision or platform detection is implemented. Automatic behavior and reminders yield during falls and landing. Pause/hidden/fullscreen suppression freezes gravity; reduced motion and quiet mode finish without a physical throw. The renderer uses native falling/landed events rather than an idle reset on release, avoiding cancellation of a newly started fall. LANDING compresses and settles the pose for 900 ms; WALL-E retains rigid chassis proportions.
+
+This release has no automated tests or UI/visual checks, at the user’s request. Runtime smoothness, cross-monitor dragging, DPI changes and all character/action combinations remain unverified.
